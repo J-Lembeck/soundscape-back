@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd">
+
+    <changeSet id="CREATE_SONGS" author="João Vitor Lembeck">
+        <createTable tableName="songs">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="title" type="varchar(255)"/>
+            <column name="length" type="bigint"/>
+            <column name="audio_file_id" type="bigint"/>
+            <column name="artist_id" type="bigint"/>
+            <column name="image_data" type="BLOB"/>
+        </createTable>
+
+        <addForeignKeyConstraint baseTableName="songs"
+                                 baseColumnNames="audio_file_id"
+                                 constraintName="fk_songs_audio_files"
+                                 referencedTableName="audio_files"
+                                 referencedColumnNames="id"/>
+
+		<addForeignKeyConstraint baseTableName="songs"
+                                 baseColumnNames="artist_id"
+                                 constraintName="fk_songs_artists"
+                                 referencedTableName="artists"
+                                 referencedColumnNames="id"/>
+    </changeSet>
+</databaseChangeLog>
