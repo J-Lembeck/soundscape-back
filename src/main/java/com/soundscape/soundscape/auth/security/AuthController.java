@@ -5,8 +5,10 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -34,5 +36,22 @@ public class AuthController {
 
         final UserDetails userDetails = userDetailsService.loadUserByUsername(authRequest.getUsername());
         return jwtTokenUtil.generateToken(userDetails);
+    }
+
+    @GetMapping("/validate-token")
+    public boolean validateToken(@RequestHeader("Authorization") String token) {
+        if (token == null || !token.startsWith("Bearer ")) {
+            return false;
+        }
+
+        String jwtToken = token.substring(7);
+        String username = jwtTokenUtil.getUsernameFromToken(jwtToken);
+
+        if (username == null) {
+            return false;
+        }
+
+        UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+        return jwtTokenUtil.validateToken(jwtToken, userDetails);
     }
 }

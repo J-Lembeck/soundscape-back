@@ -15,7 +15,7 @@ public class JwtTokenUtil {
 	@Value("${jwt.secret}")
     private String secret;
 
-    private final long expirationTime = 108_000_000;
+    private final long expirationTime = 108_000;
 
     public String generateToken(UserDetails userDetails) {
         return Jwts.builder()
@@ -33,5 +33,9 @@ public class JwtTokenUtil {
 
     private boolean isTokenExpired(String token) {
         return Jwts.parser().setSigningKey(secret).parseClaimsJws(token).getBody().getExpiration().before(new Date());
+    }
+
+    public String getUsernameFromToken(String token) {
+        return Jwts.parser().setSigningKey(secret).parseClaimsJws(token).getBody().getSubject();
     }
 }
