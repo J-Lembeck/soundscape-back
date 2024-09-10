@@ -24,12 +24,12 @@ public class SongController {
 	@Autowired
 	private SongService songService;
 
-	@GetMapping(path = "/listAll")
+	@GetMapping(path = "/load/listAll")
 	public List<SongDTO> listAll() {
 		return songService.listAll();
 	}
 
-	@GetMapping(value = "/image", produces = MediaType.IMAGE_JPEG_VALUE)
+	@GetMapping(value = "/load/image", produces = MediaType.IMAGE_JPEG_VALUE)
 	@ResponseBody
     public byte[] getSongImage(@RequestParam Long id) {
         return songService.getSongImage(id);
