@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd">
+
+    <changeSet id="1" author="yourname">
+        <createTable tableName="playlists">
+            <column name="id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="name" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="artist_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="creation_date" type="DATE">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <addForeignKeyConstraint
+            baseTableName="playlists"
+            baseColumnNames="artist_id"
+            constraintName="fk_playlists_artist"
+            referencedTableName="artists"
+            referencedColumnNames="id"/>
+    </changeSet>
+
+    <changeSet id="2" author="yourname">
+        <createTable tableName="playlist_song">
+            <column name="playlist_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="song_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <addForeignKeyConstraint
+            baseTableName="playlist_song"
+            baseColumnNames="playlist_id"
+            constraintName="fk_playlist_song_playlist"
+            referencedTableName="playlists"
+            referencedColumnNames="id"/>
+
+        <addForeignKeyConstraint
+            baseTableName="playlist_song"
+            baseColumnNames="song_id"
+            constraintName="fk_playlist_song_song"
+            referencedTableName="songs"
+            referencedColumnNames="id"/>
+
+        <addUniqueConstraint
+            tableName="playlist_song"
+            columnNames="playlist_id, song_id"
+            constraintName="uc_playlist_song"/>
+    </changeSet>
+
+</databaseChangeLog>

@@ -1,5 +1,7 @@
 package com.soundscape.soundscape.audiofile;
 
+import java.util.Date;
+
 import com.soundscape.soundscape.song.SongModel;
 
 import jakarta.persistence.Entity;
@@ -25,6 +27,7 @@ public class AudioFileModel {
 
     private String fileName;
     private String filePath;
+    private Date creationDate;
 
     private Long size;
 

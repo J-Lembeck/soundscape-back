@@ -1,5 +1,6 @@
 package com.soundscape.soundscape.artist;
 
+import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -29,6 +30,7 @@ public class ArtistModel {
 
 	private String name;
 	private String password;
+	private Date CreationDate;
 
 	@OneToMany(mappedBy = "artist", cascade = CascadeType.ALL, orphanRemoval = true)
 	private Set<SongModel> songs = new HashSet<>();

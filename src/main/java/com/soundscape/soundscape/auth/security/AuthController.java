@@ -1,5 +1,6 @@
 package com.soundscape.soundscape.auth.security;
 
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -13,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.soundscape.soundscape.artist.details.CustomUserDetailsService;
+import com.soundscape.soundscape.security.JwtTokenUtil;
 
 @RestController
 @RequestMapping("/auth")
@@ -29,14 +31,17 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public String createAuthenticationToken(@RequestBody AuthRequest authRequest) throws AuthenticationException {
+    public ResponseEntity<AuthResponse> createAuthenticationToken(@RequestBody AuthRequest authRequest) throws AuthenticationException {
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(authRequest.getUsername(), authRequest.getPassword())
         );
 
         final UserDetails userDetails = userDetailsService.loadUserByUsername(authRequest.getUsername());
-        return jwtTokenUtil.generateToken(userDetails);
+        final String token = jwtTokenUtil.generateToken(userDetails);
+
+        return ResponseEntity.ok(new AuthResponse(token, userDetails.getUsername()));
     }
+
 
     @GetMapping("/validate-token")
     public boolean validateToken(@RequestHeader("Authorization") String token) {

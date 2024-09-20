@@ -1,4 +1,4 @@
-package com.soundscape.soundscape.auth.security;
+package com.soundscape.soundscape.security;
 
 import java.util.Date;
 
@@ -15,7 +15,7 @@ public class JwtTokenUtil {
 	@Value("${jwt.secret}")
     private String secret;
 
-    private final long expirationTime = 108_000;
+    private final long expirationTime = 108_000_000;
 
     public String generateToken(UserDetails userDetails) {
         return Jwts.builder()
