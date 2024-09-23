@@ -12,6 +12,7 @@ public class SongFactory {
 		dto.setTitle(model.getTitle());
 		dto.setLength(model.getLength());
 		dto.setArtist(new ArtistDTO(model.getArtist()));
+		dto.setCreationDate(model.getCreationDate());
 
 		return dto;
 	}

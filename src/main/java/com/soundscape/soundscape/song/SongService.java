@@ -58,14 +58,15 @@ public class SongService {
             Mp3File mp3File = new Mp3File(audioFilePath);
             long durationInSeconds = mp3File.getLengthInSeconds();
 
-            byte[] imageData = IOUtils.toByteArray(songData.getImageFile().getInputStream());
-
             SongModel songModel = new SongModel();
             songModel.setTitle(songData.getTitle());
             songModel.setAudioFile(audioFileModel);
             songModel.setArtist(artist);
             songModel.setLength(durationInSeconds);
-            songModel.setImageData(imageData);
+            if(songData.getImageFile() != null) {
+            	byte[] imageData = IOUtils.toByteArray(songData.getImageFile().getInputStream());
+            	songModel.setImageData(imageData);
+            }
             songModel.setCreationDate(currentDate);
 
             songRepository.save(songModel);
