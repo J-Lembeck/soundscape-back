@@ -55,13 +55,11 @@ public class AudioStreamHandler extends BinaryWebSocketHandler {
             return;
         }
 
-        // Stream duration
         String filePath = songRepository.findById(songId).get().getAudioFile().getFilePath();
-        Mp3File mp3file = new Mp3File(filePath); // Directly use the file path
+        Mp3File mp3file = new Mp3File(filePath);
         long durationInSeconds = mp3file.getLengthInSeconds();
         session.sendMessage(new TextMessage("duration:" + durationInSeconds));
 
-        // Stream audio data
         int bytesRead;
         byte[] buffer = new byte[1024];
         while ((bytesRead = audioStream.read(buffer)) != -1) {

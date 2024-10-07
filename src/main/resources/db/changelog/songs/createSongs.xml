@@ -14,7 +14,7 @@
             <column name="length" type="bigint"/>
             <column name="audio_file_id" type="bigint"/>
             <column name="artist_id" type="bigint"/>
-            <column name="image_data" type="BLOB"/>
+       		<column name="song_image_id" type="bigint"/>
             <column name="creation_date" type="DATE">
                 <constraints nullable="false"/>
             </column>
@@ -24,6 +24,12 @@
                                  baseColumnNames="audio_file_id"
                                  constraintName="fk_songs_audio_files"
                                  referencedTableName="audio_files"
+                                 referencedColumnNames="id"/>
+
+		<addForeignKeyConstraint baseTableName="songs"
+                                 baseColumnNames="song_image_id"
+                                 constraintName="fk_songs_image"
+                                 referencedTableName="song_image"
                                  referencedColumnNames="id"/>
 
 		<addForeignKeyConstraint baseTableName="songs"

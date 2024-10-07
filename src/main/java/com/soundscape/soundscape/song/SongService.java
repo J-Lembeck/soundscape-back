@@ -20,6 +20,10 @@ import com.soundscape.soundscape.audiofile.AudioFileModel;
 import com.soundscape.soundscape.audiofile.AudioFileRepository;
 import com.soundscape.soundscape.song.dto.SongDTO;
 import com.soundscape.soundscape.song.dto.SongUploadDTO;
+import com.soundscape.soundscape.song.image.SongImageModel;
+import com.soundscape.soundscape.song.image.SongImageRepository;
+
+import jakarta.transaction.Transactional;
 
 @Service
 public class SongService {
@@ -32,6 +36,9 @@ public class SongService {
 
     @Autowired
     private AudioFileRepository audioFileRepository;
+
+    @Autowired
+    private SongImageRepository songImageRepository;
 
     public ResponseEntity<String> saveSongWithAudio(String userName, SongUploadDTO songData) throws IOException {
         try {
@@ -65,7 +72,9 @@ public class SongService {
             songModel.setLength(durationInSeconds);
             if(songData.getImageFile() != null) {
             	byte[] imageData = IOUtils.toByteArray(songData.getImageFile().getInputStream());
-            	songModel.setImageData(imageData);
+            	SongImageModel songImageModel = songImageRepository.save(new SongImageModel(imageData, currentDate));
+
+            	songModel.setSongImage(songImageModel);
             }
             songModel.setCreationDate(currentDate);
 
@@ -79,13 +88,14 @@ public class SongService {
     }
 
     public byte[] getSongImage(Long songId) {
-    	return this.songRepository.findById(songId).get().getImageData();
+    	return this.songRepository.findById(songId).get().getSongImage().getImageData();
     }
 
     public List<SongDTO> listAll() {
     	return this.songRepository.findAllWithoutImageDataOrderByCreationDate();
     }
 
+    @Transactional
     public List<SongDTO> searchSongs(String searchTerm) {
         List<SongModel> foundSongs = songRepository.searchByTitleOrArtistName(searchTerm);
         

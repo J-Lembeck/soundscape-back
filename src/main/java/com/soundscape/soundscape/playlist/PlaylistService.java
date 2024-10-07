@@ -97,4 +97,14 @@ public class PlaylistService {
 	    return ResponseEntity.ok("Song removed from the playlist successfully.");
 	}
 
+	public ResponseEntity<String> deletePlaylist(Long playlistId) {
+		try {
+			playlistRepository.deleteById(playlistId);
+			return ResponseEntity.ok("Playlist deleted.");
+		} catch (Exception e) {
+			e.printStackTrace();
+			return ResponseEntity.ok("An error ocurred.");
+		}
+		
+	}
 }
