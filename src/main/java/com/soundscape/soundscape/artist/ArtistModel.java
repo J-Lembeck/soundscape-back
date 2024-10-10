@@ -8,6 +8,7 @@ import com.soundscape.soundscape.song.SongModel;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -32,6 +33,6 @@ public class ArtistModel {
 	private String password;
 	private Date CreationDate;
 
-	@OneToMany(mappedBy = "artist", cascade = CascadeType.ALL, orphanRemoval = true)
+	@OneToMany(mappedBy = "artist", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
 	private Set<SongModel> songs = new HashSet<>();
 }

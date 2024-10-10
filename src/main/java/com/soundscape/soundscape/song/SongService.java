@@ -87,8 +87,9 @@ public class SongService {
         }
     }
 
+    @Transactional
     public byte[] getSongImage(Long songId) {
-    	return this.songRepository.findById(songId).get().getSongImage().getImageData();
+    	return this.songImageRepository.findImageBySongId(songId);
     }
 
     public List<SongDTO> listAll() {

@@ -10,7 +10,7 @@
             <column name="id" type="bigint" autoIncrement="true">
                 <constraints primaryKey="true" nullable="false"/>
             </column>
-            <column name="image_data" type="BLOB"/>
+            <column name="image_data" type="BYTEA"/>
             <column name="creation_date" type="DATE">
                 <constraints nullable="false"/>
             </column>

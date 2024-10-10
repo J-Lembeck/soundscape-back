@@ -49,17 +49,26 @@ public class PlaylistController {
 	}
 
 	@PutMapping(path = "/addSongToPlaylist")
-	public ResponseEntity<String> addSongToPlaylist(@RequestParam Long playlistId, @RequestParam Long songId) {
-		return playlistService.addSongToPlaylist(playlistId, songId);
+	public ResponseEntity<String> addSongToPlaylist(@RequestHeader(HttpHeaders.AUTHORIZATION) String authHeader, @RequestParam Long playlistId, @RequestParam Long songId) {
+		String token = authHeader.substring(7);
+	    String userName = jwtTokenUtil.getUsernameFromToken(token);
+
+		return playlistService.addSongToPlaylist(playlistId, songId, userName);
 	}
 
 	@PutMapping(path = "/removeSongFromPlaylist")
-	public ResponseEntity<String> removeSongFromPlaylist(@RequestParam Long playlistId, @RequestParam Long songId) {
-		return playlistService.removeSongFromPlaylist(playlistId, songId);
+	public ResponseEntity<String> removeSongFromPlaylist(@RequestHeader(HttpHeaders.AUTHORIZATION) String authHeader, @RequestParam Long playlistId, @RequestParam Long songId) {
+		String token = authHeader.substring(7);
+	    String userName = jwtTokenUtil.getUsernameFromToken(token);
+
+		return playlistService.removeSongFromPlaylist(playlistId, songId, userName);
 	}
 
 	@DeleteMapping(path = "/deletePlaylist")
-	public ResponseEntity<String> deletePlaylist(@RequestParam Long playlistId) {
-		return playlistService.deletePlaylist(playlistId);
+	public ResponseEntity<String> deletePlaylist(@RequestHeader(HttpHeaders.AUTHORIZATION) String authHeader, @RequestParam Long playlistId) {
+		String token = authHeader.substring(7);
+	    String userName = jwtTokenUtil.getUsernameFromToken(token);
+
+		return playlistService.deletePlaylist(playlistId, userName);
 	}
 }

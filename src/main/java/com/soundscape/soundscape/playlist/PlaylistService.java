@@ -62,12 +62,19 @@ public class PlaylistService {
 	}
 
 	@Transactional
-	public ResponseEntity<String> addSongToPlaylist(Long playlistId, Long songId) {
-	    SongModel songToAdd = songRepository.findById(songId)
-	            .orElseThrow(() -> new IllegalArgumentException("Song not found"));
+	public ResponseEntity<String> addSongToPlaylist(Long playlistId, Long songId, String userName) {
+		ArtistModel artistLogged = artistRepository.findByName(userName)
+				.orElseThrow(() -> new IllegalArgumentException("User not found"));
 
 	    PlaylistModel playlist = playlistRepository.findById(playlistId)
 	            .orElseThrow(() -> new IllegalArgumentException("Playlist not found"));
+
+	    if (!artistLogged.getId().equals(playlist.getArtist().getId())) {
+	        return ResponseEntity.badRequest().body("No permission to edit this playlist.");
+	    }
+	    
+	    SongModel songToAdd = songRepository.findById(songId)
+	            .orElseThrow(() -> new IllegalArgumentException("Song not found"));
 
 	    if (playlist.getSongs().contains(songToAdd)) {
 	        return ResponseEntity.badRequest().body("The song is already in the playlist.");
@@ -80,12 +87,19 @@ public class PlaylistService {
 	}
 
 	@Transactional
-	public ResponseEntity<String> removeSongFromPlaylist(Long playlistId, Long songId) {
-	    SongModel songToRemove = songRepository.findById(songId)
-	            .orElseThrow(() -> new IllegalArgumentException("Song not found"));
+	public ResponseEntity<String> removeSongFromPlaylist(Long playlistId, Long songId, String userName) {
+		ArtistModel artistLogged = artistRepository.findByName(userName)
+				.orElseThrow(() -> new IllegalArgumentException("User not found"));
 
 	    PlaylistModel playlist = playlistRepository.findById(playlistId)
 	            .orElseThrow(() -> new IllegalArgumentException("Playlist not found"));
+
+	    if (!artistLogged.getId().equals(playlist.getArtist().getId())) {
+	        return ResponseEntity.badRequest().body("No permission to edit this playlist.");
+	    }
+
+	    SongModel songToRemove = songRepository.findById(songId)
+	            .orElseThrow(() -> new IllegalArgumentException("Song not found"));
 
 	    if (!playlist.getSongs().contains(songToRemove)) {
 	        return ResponseEntity.badRequest().body("The song is not in the playlist.");
@@ -97,8 +111,18 @@ public class PlaylistService {
 	    return ResponseEntity.ok("Song removed from the playlist successfully.");
 	}
 
-	public ResponseEntity<String> deletePlaylist(Long playlistId) {
+	public ResponseEntity<String> deletePlaylist(Long playlistId, String userName) {
 		try {
+			ArtistModel artistLogged = artistRepository.findByName(userName)
+					.orElseThrow(() -> new IllegalArgumentException("User not found"));
+
+			PlaylistModel playlist = playlistRepository.findById(playlistId)
+					.orElseThrow(() -> new IllegalArgumentException("Playlist not found"));
+
+			if (!artistLogged.getId().equals(playlist.getArtist().getId())) {
+		        return ResponseEntity.badRequest().body("No permission to delete this playlist.");
+		    }
+
 			playlistRepository.deleteById(playlistId);
 			return ResponseEntity.ok("Playlist deleted.");
 		} catch (Exception e) {
