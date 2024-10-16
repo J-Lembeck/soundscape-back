@@ -10,6 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -31,8 +32,15 @@ public class SongController {
     private JwtTokenUtil jwtTokenUtil;
 
 	@GetMapping(path = "/load/listAll")
-	public List<SongDTO> listAll() {
-		return songService.listAll();
+	public List<SongDTO> listAllOrForLoggedUser(@RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader) {
+	    if (authHeader != null && authHeader.startsWith("Bearer ")) {
+	        String token = authHeader.substring(7);
+	        String userName = jwtTokenUtil.getUsernameFromToken(token);
+
+	        return songService.listAllForLoggedUser(userName);
+	    } else {
+	        return songService.listAll();
+	    }
 	}
 
 	@GetMapping(value = "/load/image", produces = MediaType.IMAGE_JPEG_VALUE)
@@ -42,9 +50,7 @@ public class SongController {
     }
 
 	@PostMapping(path = "/upload")
-    public ResponseEntity<String> uploadSong(@RequestHeader(HttpHeaders.AUTHORIZATION) String authHeader, 
-                                             @ModelAttribute SongUploadDTO songData) throws IOException {
-
+    public ResponseEntity<String> uploadSong(@RequestHeader(HttpHeaders.AUTHORIZATION) String authHeader, @ModelAttribute SongUploadDTO songData) throws IOException {
         String token = authHeader.substring(7);
         String userName = jwtTokenUtil.getUsernameFromToken(token);
 
@@ -54,5 +60,21 @@ public class SongController {
 	@GetMapping(path = "/searchSongs")
 	public List<SongDTO> searchSongs(@RequestParam String searchTerm) {
 		return this.songService.searchSongs(searchTerm);
+	}
+
+	@GetMapping(path="/findLikedSongs")
+	public List<SongDTO> findLikedSongsFromLoggedUser(@RequestHeader(HttpHeaders.AUTHORIZATION) String authHeader) {
+		 String token = authHeader.substring(7);
+	     String userName = jwtTokenUtil.getUsernameFromToken(token);
+	     
+	     return songService.findLikedSongsFromArtist(userName);
+	}
+
+	@PutMapping(path="/likeSong")
+	public ResponseEntity<String> findLikedSongsFromLoggedUser(@RequestHeader(HttpHeaders.AUTHORIZATION) String authHeader, @RequestParam Long songId) {
+		 String token = authHeader.substring(7);
+	     String userName = jwtTokenUtil.getUsernameFromToken(token);
+	     
+	     return songService.likeSong(userName, songId);
 	}
 }

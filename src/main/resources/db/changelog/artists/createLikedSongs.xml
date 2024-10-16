@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd">
+
+    <changeSet id="CREATE_LIKED_SONGS" author="João Vitor Lembeck">
+        <createTable tableName="artists_liked_songs">
+            <column name="artist_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="song_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <addForeignKeyConstraint 
+            baseTableName="artists_liked_songs" 
+            baseColumnNames="artist_id"
+            referencedTableName="artists" 
+            referencedColumnNames="id"
+            constraintName="fk_artist_liked_songs_artist"/>
+
+        <addForeignKeyConstraint 
+            baseTableName="artists_liked_songs" 
+            baseColumnNames="song_id"
+            referencedTableName="songs" 
+            referencedColumnNames="id"
+            constraintName="fk_artist_liked_songs_song"/>
+
+        <addUniqueConstraint 
+            tableName="artists_liked_songs" 
+            columnNames="artist_id, song_id"
+            constraintName="unique_artist_song_like"/>
+
+    </changeSet>
+
+</databaseChangeLog>

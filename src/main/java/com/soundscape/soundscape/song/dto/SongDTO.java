@@ -18,5 +18,14 @@ public class SongDTO {
 	private ArtistDTO artist;
 	private Date creationDate;
 	private Long length;
+	private Boolean isLiked;
+
+    public SongDTO(Long id, String title, ArtistDTO artist, Date creationDate, Long length) {
+        this.id = id;
+        this.title = title;
+        this.artist = artist;
+        this.creationDate = creationDate;
+        this.length = length;
+    }
 
 }

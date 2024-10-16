@@ -12,10 +12,17 @@ public interface SongRepository extends JpaRepository<SongModel, Long>{
 
 	@Query("SELECT new com.soundscape.soundscape.song.dto.SongDTO(s.id, s.title, new com.soundscape.soundscape.artist.dto.ArtistDTO(a.id, a.name), s.creationDate, s.length) "
 			+ "       FROM SongModel s JOIN s.artist a ORDER BY s.creationDate DESC")
-	List<SongDTO> findAllWithoutImageDataOrderByCreationDate();
+	public List<SongDTO> findAllWithoutImageDataOrderByCreationDate();
+
+	@Query("SELECT new com.soundscape.soundscape.song.dto.SongDTO(s.id, s.title, new com.soundscape.soundscape.artist.dto.ArtistDTO(a.id, a.name), s.creationDate, s.length, " +
+		       "CASE WHEN (s IN (SELECT song FROM ArtistModel artist JOIN artist.likedSongs song WHERE artist.id = :artistId)) THEN true ELSE false END) " +
+		       "FROM SongModel s " +
+		       "JOIN s.artist a " +
+		       "ORDER BY s.creationDate DESC")
+	public List<SongDTO> findAllWithoutImageDataAndLikedStatus(@Param("artistId") Long artistId);
 
     @Query("SELECT s FROM SongModel s WHERE LOWER(s.title) LIKE LOWER(CONCAT('%', :searchTerm, '%')) " +
             "OR LOWER(s.artist.name) LIKE LOWER(CONCAT('%', :searchTerm, '%'))")
-    List<SongModel> searchByTitleOrArtistName(@Param("searchTerm") String searchTerm);
+    public List<SongModel> searchByTitleOrArtistName(@Param("searchTerm") String searchTerm);
 
 }

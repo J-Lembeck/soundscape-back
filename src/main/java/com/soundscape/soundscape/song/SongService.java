@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Date;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -82,7 +83,7 @@ public class SongService {
 
             return ResponseEntity.ok("Song and image uploaded successfully");
         } catch (Exception e) {
-            e.printStackTrace();
+        	e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to upload song and image: " + e.getMessage());
         }
     }
@@ -90,6 +91,13 @@ public class SongService {
     @Transactional
     public byte[] getSongImage(Long songId) {
     	return this.songImageRepository.findImageBySongId(songId);
+    }
+
+    public List<SongDTO> listAllForLoggedUser(String userName) {
+    	ArtistModel artist = artistRepository.findByName(userName)
+                .orElseThrow(() -> new IllegalArgumentException("Artist not found"));
+
+    	return this.songRepository.findAllWithoutImageDataAndLikedStatus(artist.getId());
     }
 
     public List<SongDTO> listAll() {
@@ -102,5 +110,39 @@ public class SongService {
         
         return foundSongs.stream().map(song -> new SongFactory().buildDTO(song))
                 .collect(Collectors.toList());
+    }
+
+    public List<SongDTO> findLikedSongsFromArtist(String userName) {
+    	ArtistModel artist = artistRepository.findByName(userName)
+                .orElseThrow(() -> new IllegalArgumentException("Artist not found"));
+
+    	return artist.getLikedSongs().stream().map(song -> new SongFactory().buildDTO(song))
+                .collect(Collectors.toList());
+    }
+
+    public ResponseEntity<String> likeSong(String userName, Long songId) {
+        try {
+            ArtistModel artist = artistRepository.findByName(userName)
+                    .orElseThrow(() -> new IllegalArgumentException("Artist not found."));
+
+            SongModel song = songRepository.findById(songId)
+                    .orElseThrow(() -> new IllegalArgumentException("Song not found."));
+
+            Set<SongModel> likedSongs = artist.getLikedSongs();
+
+            if (likedSongs.contains(song)) {
+                likedSongs.remove(song);
+                artistRepository.save(artist);
+                return ResponseEntity.ok("Song removed from liked songs successfully.");
+            } else {
+                likedSongs.add(song);
+                artistRepository.save(artist);
+                return ResponseEntity.ok("Song added to liked songs successfully.");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Falha ao processar a ação: " + e.getMessage());
+        }
     }
 }

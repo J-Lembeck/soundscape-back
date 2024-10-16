@@ -7,6 +7,7 @@
 
     <include file="/db/changelog/audioFiles/createAudioFiles.xml"/>
     <include file="/db/changelog/artists/createArtists.xml"/>
+	<include file="/db/changelog/artists/createLikedSongs.xml"/>
     <include file="/db/changelog/songs/songImage/createSongImage.xml"/>
     <include file="/db/changelog/songs/createSongs.xml"/>
     <include file="/db/changelog/playlists/createPlaylists.xml"/>

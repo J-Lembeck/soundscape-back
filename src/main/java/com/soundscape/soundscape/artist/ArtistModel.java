@@ -12,6 +12,9 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinTable;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToMany;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
@@ -31,8 +34,16 @@ public class ArtistModel {
 
 	private String name;
 	private String password;
-	private Date CreationDate;
+	private Date creationDate;
 
 	@OneToMany(mappedBy = "artist", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
 	private Set<SongModel> songs = new HashSet<>();
+
+	@ManyToMany(fetch = FetchType.LAZY)
+	@JoinTable(
+	    name = "artists_liked_songs",
+	    joinColumns = @JoinColumn(name = "artist_id"),
+	    inverseJoinColumns = @JoinColumn(name = "song_id")
+	)
+	private Set<SongModel> likedSongs = new HashSet<>();
 }
