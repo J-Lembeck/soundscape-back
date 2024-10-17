@@ -58,8 +58,15 @@ public class SongController {
     }
 
 	@GetMapping(path = "/searchSongs")
-	public List<SongDTO> searchSongs(@RequestParam String searchTerm) {
-		return this.songService.searchSongs(searchTerm);
+	public List<SongDTO> searchSongs(@RequestHeader(HttpHeaders.AUTHORIZATION) String authHeader, @RequestParam String searchTerm) {
+		if (authHeader != null && authHeader.startsWith("Bearer ")) {
+	        String token = authHeader.substring(7);
+	        String userName = jwtTokenUtil.getUsernameFromToken(token);
+
+	        return songService.searchSongsForLoggedUser(searchTerm, userName);
+	    } else {
+	    	return songService.searchSongs(searchTerm);
+	    }
 	}
 
 	@GetMapping(path="/findLikedSongs")

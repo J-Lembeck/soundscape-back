@@ -16,4 +16,17 @@ public class SongFactory {
 
 		return dto;
 	}
+
+	public SongDTO buildLikedDTO(SongModel model) {
+		SongDTO dto = new SongDTO();
+
+		dto.setId(model.getId());
+		dto.setTitle(model.getTitle());
+		dto.setLength(model.getLength());
+		dto.setArtist(new ArtistDTO(model.getArtist()));
+		dto.setCreationDate(model.getCreationDate()); 
+		dto.setIsLiked(Boolean.TRUE); 
+
+		return dto;
+	}
 }

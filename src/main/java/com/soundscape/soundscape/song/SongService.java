@@ -105,6 +105,15 @@ public class SongService {
     }
 
     @Transactional
+    public List<SongDTO> searchSongsForLoggedUser(String searchTerm, String username) {
+    	ArtistModel artist = artistRepository.findByName(username)
+                .orElseThrow(() -> new IllegalArgumentException("Artist not found"));
+
+        List<SongDTO> foundSongs = songRepository.searchByTitleOrArtistNameAndLiked(searchTerm, artist.getId());
+        return foundSongs;
+    }
+
+    @Transactional
     public List<SongDTO> searchSongs(String searchTerm) {
         List<SongModel> foundSongs = songRepository.searchByTitleOrArtistName(searchTerm);
         
@@ -116,7 +125,7 @@ public class SongService {
     	ArtistModel artist = artistRepository.findByName(userName)
                 .orElseThrow(() -> new IllegalArgumentException("Artist not found"));
 
-    	return artist.getLikedSongs().stream().map(song -> new SongFactory().buildDTO(song))
+    	return artist.getLikedSongs().stream().map(song -> new SongFactory().buildLikedDTO(song))
                 .collect(Collectors.toList());
     }
 
