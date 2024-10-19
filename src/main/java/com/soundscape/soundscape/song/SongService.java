@@ -15,6 +15,7 @@ import org.apache.commons.io.IOUtils;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -30,6 +31,7 @@ import com.soundscape.soundscape.song.dto.SongUploadDTO;
 import com.soundscape.soundscape.song.image.SongImageModel;
 import com.soundscape.soundscape.song.image.SongImageRepository;
 
+import io.github.cdimascio.dotenv.Dotenv;
 import jakarta.transaction.Transactional;
 
 @Service
@@ -48,6 +50,12 @@ public class SongService {
     @Autowired
     private SongImageRepository songImageRepository;
 
+    private final Dotenv dotenv = Dotenv.load();
+
+    private String accessKey = dotenv.get("ACR_ACCESS_KEY");
+    private String accessSecret = dotenv.get("ACR_ACCESS_SECRET");
+    private String acrHost = dotenv.get("ACR_HOST", "identify-us-west-2.acrcloud.com");
+
     public ResponseEntity<String> saveSongWithAudio(String userName, SongUploadDTO songData) throws IOException {
         try {
             ArtistModel artist = artistRepository.findByName(userName)
@@ -63,9 +71,9 @@ public class SongService {
             songData.getAudioFile().transferTo(audioFile);
 
             Map<String, Object> config = new HashMap<>();
-            config.put("host", "identify-us-west-2.acrcloud.com");
-            config.put("access_key", "4506d6b0ea4001a4f47b424c388e244c");
-            config.put("access_secret", "9fMlEKZZLpVfeuqTDuuGhuks5x4TPbBV79EW89hd");
+            config.put("host", acrHost);
+            config.put("access_key", accessKey);
+            config.put("access_secret", accessSecret);
             config.put("timeout", 10);
 
             ACRCloudRecognizer recognizer = new ACRCloudRecognizer(config);
