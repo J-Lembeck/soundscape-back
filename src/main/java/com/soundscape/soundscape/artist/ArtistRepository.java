@@ -8,4 +8,8 @@ public interface ArtistRepository extends JpaRepository<ArtistModel, Long> {
 
 	Optional<ArtistModel> findByName(String username);
 
+    boolean existsByEmail(String email);
+
+    boolean existsByName(String name);
+
 }
