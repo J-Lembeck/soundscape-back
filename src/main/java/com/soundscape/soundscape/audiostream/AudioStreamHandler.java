@@ -1,8 +1,7 @@
 package com.soundscape.soundscape.audiostream;
 
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.InputStream;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.nio.ByteBuffer;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,6 +13,8 @@ import org.springframework.web.socket.handler.BinaryWebSocketHandler;
 
 import com.mpatric.mp3agic.Mp3File;
 import com.soundscape.soundscape.song.SongRepository;
+
+import jakarta.transaction.Transactional;
 
 @Component
 public class AudioStreamHandler extends BinaryWebSocketHandler {
@@ -47,36 +48,38 @@ public class AudioStreamHandler extends BinaryWebSocketHandler {
         }
     }
 
+    @Transactional
     private void startStreaming(WebSocketSession session) throws Exception {
-        InputStream audioStream = getAudioStreamBySongId(songId);
+        byte[] audioData = getAudioDataBySongId(songId);
 
-        if (audioStream == null) {
+        if (audioData == null) {
             session.sendMessage(new TextMessage("Error: Audio file not found."));
             return;
         }
 
-        String filePath = songRepository.findById(songId).get().getAudioFile().getFilePath();
-        Mp3File mp3file = new Mp3File(filePath);
+        File tempAudioFile = File.createTempFile("tempAudio", ".mp3");
+        try (FileOutputStream fos = new FileOutputStream(tempAudioFile)) {
+            fos.write(audioData);
+        }
+
+        Mp3File mp3file = new Mp3File(tempAudioFile);
         long durationInSeconds = mp3file.getLengthInSeconds();
         session.sendMessage(new TextMessage("duration:" + durationInSeconds));
 
-        int bytesRead;
-        byte[] buffer = new byte[1024];
-        while ((bytesRead = audioStream.read(buffer)) != -1) {
-            ByteBuffer byteBuffer = ByteBuffer.wrap(buffer, 0, bytesRead);
-            session.sendMessage(new BinaryMessage(byteBuffer));
+        ByteBuffer byteBuffer = ByteBuffer.wrap(audioData);
+        int chunkSize = 1024;
+        while (byteBuffer.hasRemaining()) {
+            byte[] buffer = new byte[Math.min(chunkSize, byteBuffer.remaining())];
+            byteBuffer.get(buffer);
+            session.sendMessage(new BinaryMessage(ByteBuffer.wrap(buffer)));
         }
 
-        audioStream.close();
+        tempAudioFile.delete();
     }
 
-    private InputStream getAudioStreamBySongId(Long songId) {
-        String filePath = songRepository.findById(songId).get().getAudioFile().getFilePath();
-        try {
-            return new FileInputStream(filePath);
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-            return null;
-        }
+    private byte[] getAudioDataBySongId(Long songId) {
+        return songRepository.findById(songId)
+                .map(song -> song.getAudioFile().getFileData())
+                .orElse(null);
     }
 }

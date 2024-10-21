@@ -4,7 +4,9 @@ import java.util.Date;
 
 import com.soundscape.soundscape.song.SongModel;
 
+import jakarta.persistence.Basic;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -21,16 +23,19 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class AudioFileModel {
 
-	@Id
+    @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     private String fileName;
-    private String filePath;
+
+    @Basic(fetch = FetchType.EAGER)
+    private byte[] fileData;
+
     private Date creationDate;
 
     private Long size;
 
     @OneToOne(mappedBy = "audioFile")
-	private SongModel song;
+    private SongModel song;
 }

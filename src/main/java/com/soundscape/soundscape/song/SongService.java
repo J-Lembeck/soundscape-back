@@ -1,8 +1,8 @@
 package com.soundscape.soundscape.song;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
-import java.nio.file.Files;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -15,7 +15,6 @@ import org.apache.commons.io.IOUtils;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -65,10 +64,8 @@ public class SongService {
             String originalAudioFileName = songData.getAudioFile().getOriginalFilename();
             String audioFileExtension = originalAudioFileName.substring(originalAudioFileName.lastIndexOf("."));
             String uniqueAudioFileName = UUID.randomUUID().toString() + audioFileExtension;
-            String audioFilePath = "C:/audioFiles/" + uniqueAudioFileName;
 
-            File audioFile = new File(audioFilePath);
-            songData.getAudioFile().transferTo(audioFile);
+            byte[] audioData = songData.getAudioFile().getBytes();
 
             Map<String, Object> config = new HashMap<>();
             config.put("host", acrHost);
@@ -77,8 +74,6 @@ public class SongService {
             config.put("timeout", 10);
 
             ACRCloudRecognizer recognizer = new ACRCloudRecognizer(config);
-
-            byte[] audioData = Files.readAllBytes(audioFile.toPath());
 
             String result = recognizer.recognizeByFileBuffer(audioData, audioData.length, 0);
 
@@ -98,13 +93,18 @@ public class SongService {
             } else {
                 AudioFileModel audioFileModel = new AudioFileModel();
                 audioFileModel.setFileName(uniqueAudioFileName);
-                audioFileModel.setFilePath(audioFilePath);
+                audioFileModel.setFileData(IOUtils.toByteArray(songData.getAudioFile().getInputStream()));
                 audioFileModel.setSize(songData.getAudioFile().getSize());
                 audioFileModel.setCreationDate(currentDate);
 
                 audioFileRepository.save(audioFileModel);
 
-                Mp3File mp3File = new Mp3File(audioFilePath);
+                File tempAudioFile = File.createTempFile("tempAudio", audioFileExtension);
+                try (FileOutputStream fos = new FileOutputStream(tempAudioFile)) {
+                    fos.write(audioData);
+                }
+
+                Mp3File mp3File = new Mp3File(tempAudioFile);
                 long durationInSeconds = mp3File.getLengthInSeconds();
 
                 SongModel songModel = new SongModel();
@@ -121,6 +121,7 @@ public class SongService {
                 songModel.setCreationDate(currentDate);
 
                 songRepository.save(songModel);
+                tempAudioFile.delete();
 
                 return ResponseEntity.ok("Song and image uploaded successfully");
             }

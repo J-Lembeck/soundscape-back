@@ -6,6 +6,7 @@ import com.soundscape.soundscape.audiofile.AudioFileModel;
 import com.soundscape.soundscape.song.image.SongImageModel;
 
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -35,7 +36,7 @@ public class SongModel {
     private Long length;
     private Date creationDate;
 
-    @OneToOne
+    @OneToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "audio_file_id", referencedColumnName = "id")
     private AudioFileModel audioFile;
 
