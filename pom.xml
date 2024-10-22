@@ -15,6 +15,10 @@
 	<description>Audio streaming project for college.</description>
 	<properties>
 		<java.version>21</java.version>
+
+		<sonar.organization>j-lembeck</sonar.organization>
+		<sonar.host.url>https://sonarcloud.io</sonar.host.url>
+
 	</properties>
 
 	<dependencies>
