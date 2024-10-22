@@ -49,11 +49,9 @@ public class SongService {
     @Autowired
     private SongImageRepository songImageRepository;
 
-    private final Dotenv dotenv = Dotenv.load();
-
-    private String accessKey = dotenv.get("ACR_ACCESS_KEY");
-    private String accessSecret = dotenv.get("ACR_ACCESS_SECRET");
-    private String acrHost = dotenv.get("ACR_HOST", "identify-us-west-2.acrcloud.com");
+    private String accessKey = System.getenv("ACR_ACCESS_KEY");
+    private String accessSecret = System.getenv("ACR_ACCESS_SECRET");
+    private String acrHost = System.getenv("ACR_HOST");
 
     public ResponseEntity<String> saveSongWithAudio(String userName, SongUploadDTO songData) throws IOException {
         try {
