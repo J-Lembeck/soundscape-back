@@ -12,6 +12,7 @@
             </column>
             <column name="title" type="varchar(255)"/>
             <column name="length" type="bigint"/>
+            <column name="likes" type="bigint"/>
             <column name="audio_file_id" type="bigint"/>
             <column name="artist_id" type="bigint"/>
        		<column name="song_image_id" type="bigint"/>

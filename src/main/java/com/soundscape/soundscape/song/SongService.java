@@ -112,6 +112,7 @@ public class SongService {
                 songModel.setAudioFile(audioFileModel);
                 songModel.setArtist(artist);
                 songModel.setLength(durationInSeconds);
+                songModel.setLikes(0L);
 
                 if (songData.getImageFile() != null) {
                     byte[] imageData = IOUtils.toByteArray(songData.getImageFile().getInputStream());
@@ -185,10 +186,14 @@ public class SongService {
 
             if (likedSongs.contains(song)) {
                 likedSongs.remove(song);
+                song.setLikes(Long.sum(song.getLikes(), -1L));
+                songRepository.save(song);
                 artistRepository.save(artist);
                 return ResponseEntity.ok("Song removed from liked songs successfully.");
             } else {
                 likedSongs.add(song);
+                song.setLikes(Long.sum(song.getLikes(), 1L));
+                songRepository.save(song);
                 artistRepository.save(artist);
                 return ResponseEntity.ok("Song added to liked songs successfully.");
             }

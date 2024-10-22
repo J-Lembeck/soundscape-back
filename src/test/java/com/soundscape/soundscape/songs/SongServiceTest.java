@@ -124,8 +124,8 @@ class SongServiceTest {
         ArtistDTO artist2 = new ArtistDTO(2L, "Artist 2");
         
         List<SongDTO> songs = Arrays.asList(
-            new SongDTO(1L, "Song 1", artist1, new Date(), 300L, Boolean.TRUE),
-            new SongDTO(2L, "Song 2", artist2, new Date(), 320L, Boolean.FALSE)
+            new SongDTO(1L, "Song 1", 1L, artist1, new Date(), 300L, Boolean.TRUE),
+            new SongDTO(2L, "Song 2", 1L, artist2, new Date(), 320L, Boolean.FALSE)
         );
         
         when(songRepository.findAllWithoutImageDataOrderByCreationDate()).thenReturn(songs);

@@ -11,6 +11,7 @@ public class SongFactory {
 		dto.setId(model.getId());
 		dto.setTitle(model.getTitle());
 		dto.setLength(model.getLength());
+		dto.setLikes(model.getLikes());
 		dto.setArtist(new ArtistDTO(model.getArtist()));
 		dto.setCreationDate(model.getCreationDate());
 
@@ -23,6 +24,7 @@ public class SongFactory {
 		dto.setId(model.getId());
 		dto.setTitle(model.getTitle());
 		dto.setLength(model.getLength());
+		dto.setLikes(model.getLikes());
 		dto.setArtist(new ArtistDTO(model.getArtist()));
 		dto.setCreationDate(model.getCreationDate()); 
 		dto.setIsLiked(Boolean.TRUE); 

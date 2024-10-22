@@ -15,6 +15,7 @@ public class SongDTO {
 
 	private Long id;
 	private String title;
+	private Long likes;
 	private ArtistDTO artist;
 	private Date creationDate;
 	private Long length;

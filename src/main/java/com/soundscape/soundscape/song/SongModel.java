@@ -34,6 +34,7 @@ public class SongModel {
     
     private String title;
     private Long length;
+    private Long likes;
     private Date creationDate;
 
     @OneToOne(fetch = FetchType.EAGER)
