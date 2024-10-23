@@ -41,11 +41,4 @@ jobs:
           run: sudo docker rm -f soundscape
 
         - name: Run docker container
-          run: sudo docker run -d -p 8080:8080 \
-            -e DATABASE_USERNAME=${{secrets.DATABASE_USERNAME}} \
-            -e DATABASE_PASSWORD='${{secrets.DATABASE_PASSWORD}}' \
-            -e DATABASE_URL=${{secrets.DATABASE_URL}} \
-            -e ACR_ACCESS_KEY=${{secrets.ACR_ACCESS_KEY}} \
-            -e ACR_ACCESS_SECRET=${{secrets.ACR_ACCESS_SECRET}} \
-            -e ACR_HOST=${{secrets.ACR_HOST}} \
-            --name soundscape ${{ secrets.DOCKER_USERNAME }}/soundscape:latest
+          run: sudo docker run -d -p 8080:8080 -e DATABASE_USERNAME=${{secrets.DATABASE_USERNAME}} -e DATABASE_PASSWORD='${{secrets.DATABASE_PASSWORD}}' -e DATABASE_URL=${{secrets.DATABASE_URL}} -e ACR_ACCESS_KEY=${{secrets.ACR_ACCESS_KEY}} -e ACR_ACCESS_SECRET=${{secrets.ACR_ACCESS_SECRET}} -e ACR_HOST=${{secrets.ACR_HOST}} --name soundscape ${{ secrets.DOCKER_USERNAME }}/soundscape:latest
