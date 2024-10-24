@@ -1,7 +1,10 @@
 package com.soundscape.soundscape.audiostream;
+
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -12,7 +15,6 @@ import java.nio.file.Paths;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.web.socket.BinaryMessage;
@@ -31,7 +33,6 @@ public class AudioStreamHandlerTest {
     @Mock
     private WebSocketSession webSocketSession;
 
-    @InjectMocks
     private AudioStreamHandler audioStreamHandler;
 
     private SongModel mockSong;
@@ -40,6 +41,8 @@ public class AudioStreamHandlerTest {
     @BeforeEach
     public void setup() throws IOException {
         MockitoAnnotations.openMocks(this);
+
+        audioStreamHandler = new AudioStreamHandler(songRepository);
 
         when(webSocketSession.isOpen()).thenReturn(true);
 
@@ -89,5 +92,30 @@ public class AudioStreamHandlerTest {
         int expectedChunks = (int) Math.ceil((double) mockAudioData.length / 1024);
 
         verify(webSocketSession, times(expectedChunks)).sendMessage(any(BinaryMessage.class));
+    }
+
+    @Test
+    public void testHandleTextMessage_CloseExistingSession() throws Exception {
+        TextMessage firstMessage = new TextMessage("songId:1");
+        audioStreamHandler.handleTextMessage(webSocketSession, firstMessage);
+
+        WebSocketSession anotherWebSocketSession = org.mockito.Mockito.mock(WebSocketSession.class);
+        when(anotherWebSocketSession.isOpen()).thenReturn(true);
+
+        TextMessage secondMessage = new TextMessage("songId:2");
+        audioStreamHandler.handleTextMessage(anotherWebSocketSession, secondMessage);
+
+        verify(webSocketSession, times(1)).close();
+    }
+
+    @Test
+    public void testHandleTextMessage_StreamingException() throws Exception {
+        doThrow(new RuntimeException("Simulated exception")).when(songRepository).findById(any(Long.class));
+
+        TextMessage message = new TextMessage("songId:1");
+
+        audioStreamHandler.handleTextMessage(webSocketSession, message);
+
+        verify(webSocketSession, never()).sendMessage(any(BinaryMessage.class));
     }
 }

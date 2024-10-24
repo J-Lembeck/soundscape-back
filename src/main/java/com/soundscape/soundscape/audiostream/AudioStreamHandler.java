@@ -25,6 +25,10 @@ public class AudioStreamHandler extends BinaryWebSocketHandler {
     @Autowired
     private SongRepository songRepository;
 
+    public AudioStreamHandler(SongRepository songRepository) {
+        this.songRepository = songRepository;
+    }
+
     @Override
     public void handleTextMessage(WebSocketSession session, TextMessage message) {
         String payload = message.getPayload();
