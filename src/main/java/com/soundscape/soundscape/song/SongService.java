@@ -53,9 +53,10 @@ public class SongService {
     private String acrHost = System.getenv("ACR_HOST");
 
     public ResponseEntity<String> saveSongWithAudio(String userName, SongUploadDTO songData) throws IOException {
+    	ArtistModel artist = artistRepository.findByName(userName)
+                .orElseThrow(() -> new IllegalArgumentException("Artist not found"));
+
         try {
-            ArtistModel artist = artistRepository.findByName(userName)
-                    .orElseThrow(() -> new IllegalArgumentException("Artist not found"));
             Date currentDate = new Date();
 
             String originalAudioFileName = songData.getAudioFile().getOriginalFilename();

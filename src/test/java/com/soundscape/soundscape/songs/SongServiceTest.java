@@ -3,6 +3,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -21,6 +22,7 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.soundscape.soundscape.artist.ArtistModel;
 import com.soundscape.soundscape.artist.ArtistRepository;
@@ -91,7 +93,7 @@ class SongServiceTest {
         ArtistModel artist = new ArtistModel();
         SongModel song = new SongModel();
         song.setLikes(1L);
-        artist.setLikedSongs(Set.of(song));
+        artist.setLikedSongs(new HashSet<>(Set.of(song)));
 
         when(artistRepository.findByName(anyString())).thenReturn(Optional.of(artist));
         when(songRepository.findById(anyLong())).thenReturn(Optional.of(song));
@@ -215,8 +217,17 @@ class SongServiceTest {
 
     @Test
     void saveSongWithAudio_ExceptionHandling() throws IOException {
-        when(artistRepository.findByName(anyString())).thenThrow(new RuntimeException("Test exception"));
+        ArtistModel artist = new ArtistModel();
+        artist.setId(1L);
+
+        when(artistRepository.findByName(anyString())).thenReturn(Optional.of(artist));
+
+        MultipartFile audioFileMock = mock(MultipartFile.class);
+        when(audioFileMock.getOriginalFilename()).thenReturn("testAudio.mp3");
+        when(audioFileMock.getBytes()).thenThrow(new IOException("Test exception"));
+
         SongUploadDTO songData = new SongUploadDTO();
+        songData.setAudioFile(audioFileMock);
 
         ResponseEntity<String> response = songService.saveSongWithAudio("testUser", songData);
 
