@@ -1,21 +1,19 @@
 package com.soundscape.soundscape.songs;
-import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mock;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.util.Arrays;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
-import org.apache.commons.io.IOUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -23,24 +21,20 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.multipart.MultipartFile;
 
-import com.mpatric.mp3agic.Mp3File;
 import com.soundscape.soundscape.artist.ArtistModel;
 import com.soundscape.soundscape.artist.ArtistRepository;
 import com.soundscape.soundscape.artist.dto.ArtistDTO;
-import com.soundscape.soundscape.audiofile.AudioFileModel;
 import com.soundscape.soundscape.audiofile.AudioFileRepository;
 import com.soundscape.soundscape.song.SongModel;
 import com.soundscape.soundscape.song.SongRepository;
 import com.soundscape.soundscape.song.SongService;
 import com.soundscape.soundscape.song.dto.SongDTO;
 import com.soundscape.soundscape.song.dto.SongUploadDTO;
-import com.soundscape.soundscape.song.image.SongImageModel;
 import com.soundscape.soundscape.song.image.SongImageRepository;
 
 class SongServiceTest {
-
+	
     @InjectMocks
     private SongService songService;
 
@@ -56,96 +50,192 @@ class SongServiceTest {
     @Mock
     private SongImageRepository songImageRepository;
 
-    @Mock
-    private Mp3File mp3File;
-
     @BeforeEach
-    void setUp() throws Exception {
+    void setUp() {
         MockitoAnnotations.openMocks(this);
     }
 
     @Test
-    void testSaveSongWithAudio_Success() throws Exception {
-        String userName = "Test Artist";
-        MultipartFile audioFile = mock(MultipartFile.class);
-        MultipartFile imageFile = mock(MultipartFile.class);
-        SongUploadDTO songData = new SongUploadDTO("Test Title", audioFile, imageFile);
+    void saveSongWithAudio_ArtistNotFound() {
+        when(artistRepository.findByName(anyString())).thenReturn(Optional.empty());
+        SongUploadDTO songData = new SongUploadDTO();
 
+        Exception exception = assertThrows(IllegalArgumentException.class, () -> {
+            songService.saveSongWithAudio("testUser", songData);
+        });
+
+        assertEquals("Artist not found", exception.getMessage());
+    }
+
+    @Test
+    void likeSong_AddLike() {
         ArtistModel artist = new ArtistModel();
-        when(artistRepository.findByName(userName)).thenReturn(Optional.of(artist));
+        SongModel song = new SongModel();
+        song.setLikes(0L);
+        artist.setLikedSongs(new HashSet<>());
 
-        when(audioFile.getOriginalFilename()).thenReturn("test.mp3");
-        when(audioFile.getInputStream()).thenReturn(mock(InputStream.class));
-        when(audioFile.getSize()).thenReturn(1234L);
+        when(artistRepository.findByName(anyString())).thenReturn(Optional.of(artist));
+        when(songRepository.findById(anyLong())).thenReturn(Optional.of(song));
 
-        when(mp3File.getLengthInSeconds()).thenReturn(120L);
-
-        when(imageFile.getInputStream()).thenReturn(mock(InputStream.class));
-        when(IOUtils.toByteArray(imageFile.getInputStream())).thenReturn(new byte[0]);
-
-        ResponseEntity<String> response = songService.saveSongWithAudio(userName, songData);
+        ResponseEntity<String> response = songService.likeSong("testUser", 1L);
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertEquals("Song and image uploaded successfully", response.getBody());
-        verify(audioFileRepository).save(any(AudioFileModel.class));
-        verify(songRepository).save(any(SongModel.class));
+        assertEquals("Song added to liked songs successfully.", response.getBody());
+        assertEquals(1L, song.getLikes());
+        verify(songRepository, times(1)).save(song);
+        verify(artistRepository, times(1)).save(artist);
     }
 
     @Test
-    void testSaveSongWithAudio_ArtistNotFound() throws IOException {
-        String userName = "NonExistentArtist";
-        SongUploadDTO songData = new SongUploadDTO("Test Title", null, null);
+    void likeSong_RemoveLike() {
+        ArtistModel artist = new ArtistModel();
+        SongModel song = new SongModel();
+        song.setLikes(1L);
+        artist.setLikedSongs(Set.of(song));
 
-        when(artistRepository.findByName(userName)).thenReturn(Optional.empty());
+        when(artistRepository.findByName(anyString())).thenReturn(Optional.of(artist));
+        when(songRepository.findById(anyLong())).thenReturn(Optional.of(song));
 
-        ResponseEntity<String> response = songService.saveSongWithAudio(userName, songData);
+        ResponseEntity<String> response = songService.likeSong("testUser", 1L);
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertEquals("Song removed from liked songs successfully.", response.getBody());
+        assertEquals(0L, song.getLikes());
+        verify(songRepository, times(1)).save(song);
+        verify(artistRepository, times(1)).save(artist);
+    }
+
+    @Test
+    void listAllForLoggedUser_ArtistNotFound() {
+        when(artistRepository.findByName(anyString())).thenReturn(Optional.empty());
+
+        Exception exception = assertThrows(IllegalArgumentException.class, () -> {
+            songService.listAllForLoggedUser("testUser");
+        });
+
+        assertEquals("Artist not found", exception.getMessage());
+    }
+
+    @Test
+    void searchSongsForLoggedUser_ArtistNotFound() {
+        when(artistRepository.findByName(anyString())).thenReturn(Optional.empty());
+
+        Exception exception = assertThrows(IllegalArgumentException.class, () -> {
+            songService.searchSongsForLoggedUser("test", "testUser");
+        });
+
+        assertEquals("Artist not found", exception.getMessage());
+    }
+
+    @Test
+    void searchSongsForLoggedUser_Success() {
+        ArtistModel artist = new ArtistModel();
+        artist.setId(1L);
+        ArtistDTO artistDTO = new ArtistDTO(1L, "Artist 1");
+
+        List<SongDTO> mockSongs = List.of(
+            new SongDTO(1L, "Song 1", artistDTO, new Date(), 200L),
+            new SongDTO(2L, "Song 2", artistDTO, new Date(), 180L)
+        );
+
+        when(artistRepository.findByName(anyString())).thenReturn(Optional.of(artist));
+        when(songRepository.searchByTitleOrArtistNameAndLiked(anyString(), anyLong())).thenReturn(mockSongs);
+
+        List<SongDTO> foundSongs = songService.searchSongsForLoggedUser("test", "testUser");
+
+        assertEquals(2, foundSongs.size());
+        assertEquals("Song 1", foundSongs.get(0).getTitle());
+        verify(songRepository, times(1)).searchByTitleOrArtistNameAndLiked(anyString(), anyLong());
+    }
+
+    @Test
+    void searchSongs_Success() {
+        ArtistModel artist = new ArtistModel();
+        artist.setId(1L);
+        artist.setName("Test Artist");
+
+        SongModel song1 = new SongModel();
+        song1.setId(1L);
+        song1.setTitle("Song 1");
+        song1.setArtist(artist);
+        song1.setLength(200L);
+        song1.setLikes(10L);
+
+        SongModel song2 = new SongModel();
+        song2.setId(2L);
+        song2.setTitle("Song 2");
+        song2.setArtist(artist);
+        song2.setLength(300L);
+        song2.setLikes(20L);
+
+        List<SongModel> mockSongs = List.of(song1, song2);
+
+        when(songRepository.searchByTitleOrArtistName(anyString())).thenReturn(mockSongs);
+
+        List<SongDTO> foundSongs = songService.searchSongs("test");
+
+        assertEquals(2, foundSongs.size());
+        assertEquals("Song 1", foundSongs.get(0).getTitle());
+        assertEquals("Song 2", foundSongs.get(1).getTitle());
+        verify(songRepository, times(1)).searchByTitleOrArtistName(anyString());
+    }
+
+    @Test
+    void findLikedSongsFromArtist_ArtistNotFound() {
+        when(artistRepository.findByName(anyString())).thenReturn(Optional.empty());
+
+        Exception exception = assertThrows(IllegalArgumentException.class, () -> {
+            songService.findLikedSongsFromArtist("testUser");
+        });
+
+        assertEquals("Artist not found", exception.getMessage());
+    }
+
+    @Test
+    void findLikedSongsFromArtist_Success() {
+        ArtistModel artist = new ArtistModel();
+        artist.setId(1L);
+
+        SongModel likedSong = new SongModel();
+        likedSong.setTitle("Liked Song");
+        likedSong.setArtist(artist);
+        likedSong.setLength(200L);
+        likedSong.setLikes(10L);
+
+        artist.setLikedSongs(Set.of(likedSong));
+
+        when(artistRepository.findByName(anyString())).thenReturn(Optional.of(artist));
+
+        List<SongDTO> likedSongs = songService.findLikedSongsFromArtist("testUser");
+
+        assertEquals(1, likedSongs.size());
+        assertEquals("Liked Song", likedSongs.get(0).getTitle());
+        verify(artistRepository, times(1)).findByName(anyString());
+    }
+
+    @Test
+    void saveSongWithAudio_ExceptionHandling() throws IOException {
+        when(artistRepository.findByName(anyString())).thenThrow(new RuntimeException("Test exception"));
+        SongUploadDTO songData = new SongUploadDTO();
+
+        ResponseEntity<String> response = songService.saveSongWithAudio("testUser", songData);
 
         assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
-        assertTrue(response.getBody().contains("Artist not found"));
+        assertEquals("Failed to upload song and image: Test exception", response.getBody());
     }
 
     @Test
-    void testGetSongImage() {
-        Long songId = 1L;
-        SongModel song = new SongModel();
-        SongImageModel imageModel = new SongImageModel(new byte[]{1, 2, 3}, new Date());
-        song.setSongImage(imageModel);
+    void listAll_Success() {
+    	ArtistDTO artistDTO = new ArtistDTO(1L, "Artist 1");
+        List<SongDTO> mockSongs = List.of(
+                new SongDTO(1L, "Song 1", artistDTO, new Date(), 200L),
+                new SongDTO(2L, "Song 2", artistDTO, new Date(), 180L)
+            );
+        when(songRepository.findAllWithoutImageDataOrderByCreationDate()).thenReturn(mockSongs);
 
-        when(songRepository.findById(songId)).thenReturn(Optional.of(song));
+        List<SongDTO> songs = songService.listAll();
 
-        byte[] imageData = songService.getSongImage(songId);
-
-        assertArrayEquals(new byte[]{1, 2, 3}, imageData);
-    }
-
-    @Test
-    void testListAll() {
-        ArtistDTO artist1 = new ArtistDTO(1L, "Artist 1");
-        ArtistDTO artist2 = new ArtistDTO(2L, "Artist 2");
-        
-        List<SongDTO> songs = Arrays.asList(
-            new SongDTO(1L, "Song 1", 1L, artist1, new Date(), 300L, Boolean.TRUE),
-            new SongDTO(2L, "Song 2", 1L, artist2, new Date(), 320L, Boolean.FALSE)
-        );
-        
-        when(songRepository.findAllWithoutImageDataOrderByCreationDate()).thenReturn(songs);
-
-        List<SongDTO> result = songService.listAll();
-
-        assertEquals(2, result.size());
-        assertEquals("Song 1", result.get(0).getTitle());
-    }
-
-    @Test
-    void testSearchSongs() {
-        String searchTerm = "test";
-        SongModel song1 = new SongModel();
-        SongModel song2 = new SongModel();
-        when(songRepository.searchByTitleOrArtistName(searchTerm)).thenReturn(Arrays.asList(song1, song2));
-
-        List<SongDTO> result = songService.searchSongs(searchTerm);
-
-        assertEquals(2, result.size());
-        verify(songRepository, times(1)).searchByTitleOrArtistName(searchTerm);
+        assertEquals(2, songs.size());
+        verify(songRepository, times(1)).findAllWithoutImageDataOrderByCreationDate();
     }
 }

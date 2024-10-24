@@ -30,7 +30,6 @@ import com.soundscape.soundscape.song.dto.SongUploadDTO;
 import com.soundscape.soundscape.song.image.SongImageModel;
 import com.soundscape.soundscape.song.image.SongImageRepository;
 
-import io.github.cdimascio.dotenv.Dotenv;
 import jakarta.transaction.Transactional;
 
 @Service
