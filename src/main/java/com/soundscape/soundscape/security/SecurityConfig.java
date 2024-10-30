@@ -26,7 +26,7 @@ public class SecurityConfig {
 	public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 		http.csrf(csrf -> csrf.disable()).cors(cors -> cors.configurationSource(request -> {
 			var corsConfig = new CorsConfiguration();
-			corsConfig.setAllowedOrigins(Arrays.asList("http://localhost:3000", "https://soundscape-project.tech", "https://soundscape-front.vercel.app/"));
+			corsConfig.setAllowedOrigins(Arrays.asList("http://localhost:3000", "https://soundscape-project.tech", "https://soundscape-front.vercel.app"));
 			corsConfig.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
 			corsConfig.setAllowedHeaders(Collections.singletonList("*"));
 			corsConfig.setAllowCredentials(true);
