@@ -54,7 +54,9 @@ public class AudioStreamHandler extends BinaryWebSocketHandler {
 
     @Transactional
     private void startStreaming(WebSocketSession session) throws Exception {
-        byte[] audioData = getAudioDataBySongId(songId);
+        byte[] audioData = songRepository.findSongWithAudioFileById(songId)
+            .map(song -> song.getAudioFile().getFileData())
+            .orElse(null);
 
         if (audioData == null) {
             session.sendMessage(new TextMessage("Error: Audio file not found."));
@@ -81,9 +83,4 @@ public class AudioStreamHandler extends BinaryWebSocketHandler {
         tempAudioFile.delete();
     }
 
-    private byte[] getAudioDataBySongId(Long songId) {
-        return songRepository.findById(songId)
-                .map(song -> song.getAudioFile().getFileData())
-                .orElse(null);
-    }
 }

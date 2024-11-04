@@ -34,4 +34,6 @@ public interface SongRepository extends JpaRepository<SongModel, Long>{
             "OR LOWER(s.artist.name) LIKE LOWER(CONCAT('%', :searchTerm, '%'))")
     public List<SongModel> searchByTitleOrArtistName(@Param("searchTerm") String searchTerm);
 
+	@Query("SELECT s FROM SongModel s JOIN FETCH s.audioFile WHERE s.id = :songId")
+    Optional<SongModel> findSongWithAudioFileById(@Param("songId") Long songId);
 }
