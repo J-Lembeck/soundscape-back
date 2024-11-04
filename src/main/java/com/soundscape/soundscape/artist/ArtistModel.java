@@ -37,7 +37,7 @@ public class ArtistModel {
 	private String password;
 	private Date creationDate;
 
-	@OneToMany(mappedBy = "artist", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
+	@OneToMany(mappedBy = "artist", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
 	private Set<SongModel> songs = new HashSet<>();
 
 	@ManyToMany(fetch = FetchType.LAZY)

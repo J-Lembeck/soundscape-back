@@ -37,7 +37,7 @@ public class PlaylistModel {
 	@JoinColumn(name = "artist_id")
 	private ArtistModel artist;
 
-    @ManyToMany
+    @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(name = "playlist_song", joinColumns = @JoinColumn(name = "playlist_id"), inverseJoinColumns = @JoinColumn(name = "song_id"))
 	private Set<SongModel> songs;
 

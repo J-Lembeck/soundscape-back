@@ -29,7 +29,7 @@ public class AudioFileModel {
 
     private String fileName;
 
-    @Basic(fetch = FetchType.EAGER)
+    @Basic(fetch = FetchType.LAZY)
     private byte[] fileData;
 
     private Date creationDate;

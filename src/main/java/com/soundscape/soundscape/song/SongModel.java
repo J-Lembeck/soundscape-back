@@ -37,15 +37,15 @@ public class SongModel {
     private Long likes;
     private Date creationDate;
 
-    @OneToOne(fetch = FetchType.EAGER)
+    @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "audio_file_id", referencedColumnName = "id")
     private AudioFileModel audioFile;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "artist_id")
     private ArtistModel artist;
 
-    @OneToOne
+    @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "song_image_id", referencedColumnName = "id")
     private SongImageModel songImage;
 }
