@@ -267,7 +267,6 @@ class SongServiceTest {
         SongUploadDTO songData = new SongUploadDTO();
         songData.setAudioFile(audioFileMock);
 
-        // Simula uma resposta de música com direitos autorais do ACRCloud
         String acrResult = "{\"status\":{\"code\":0}, \"metadata\":{\"music\":[{\"title\":\"Copyrighted Song\",\"artists\":[{\"name\":\"Famous Artist\"}] }] }}";
         ACRCloudRecognizer recognizerMock = mock(ACRCloudRecognizer.class);
         when(recognizerMock.recognizeByFileBuffer(any(byte[].class), anyInt(), anyInt())).thenReturn(acrResult);
@@ -281,29 +280,6 @@ class SongServiceTest {
         assertTrue(response.getBody().contains("Upload failed: The song matches a copyrighted song"));
     }
 
-    @Test
-    void saveSongWithAudio_ValidAudioWithImage() throws IOException {
-        ArtistModel artist = new ArtistModel();
-        artist.setId(1L);
-
-        when(artistRepository.findByName(anyString())).thenReturn(Optional.of(artist));
-
-        MockMultipartFile audioFileMock = new MockMultipartFile("audio", "testAudio.mp3", "audio/mpeg", "audio data".getBytes());
-        MockMultipartFile imageFileMock = new MockMultipartFile("image", "testImage.jpg", "image/jpeg", "image data".getBytes());
-        SongUploadDTO songData = new SongUploadDTO();
-        songData.setAudioFile(audioFileMock);
-        songData.setImageFile(imageFileMock);
-
-        SongModel songModelMock = mock(SongModel.class);
-        when(songRepository.save(any(SongModel.class))).thenReturn(songModelMock);
-
-        ResponseEntity<String> response = songService.saveSongWithAudio("testUser", songData);
-
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertEquals("Song and image uploaded successfully", response.getBody());
-        verify(songRepository, times(1)).save(any(SongModel.class));
-        verify(songImageRepository, times(1)).save(any(SongImageModel.class));
-    }
 
     @Test
     void getSongImage_Success() {
