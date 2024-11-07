@@ -2,8 +2,10 @@ package com.soundscape.soundscape.audiostream;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -18,12 +20,14 @@ import java.nio.file.Paths;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import org.springframework.web.socket.BinaryMessage;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 
 import com.soundscape.soundscape.audiofile.AudioFileModel;
+import com.soundscape.soundscape.s3.S3Service;
 import com.soundscape.soundscape.song.SongModel;
 import com.soundscape.soundscape.song.SongRepository;
 
@@ -44,7 +48,7 @@ public class AudioStreamHandlerTest {
     public void setup() throws IOException {
         MockitoAnnotations.openMocks(this);
 
-        audioStreamHandler = org.mockito.Mockito.spy(new AudioStreamHandler(songRepository));
+        audioStreamHandler = Mockito.spy(new AudioStreamHandler(songRepository));
 
         when(webSocketSession.isOpen()).thenReturn(true);
 
@@ -101,4 +105,32 @@ public class AudioStreamHandlerTest {
 
         verify(webSocketSession, never()).sendMessage(any(BinaryMessage.class));
     }
+
+    @Test
+    public void testHandleTextMessage_SuccessfulStreaming() throws Exception {
+        String s3Key = "audio/test-file.mp3";
+        String bucketName = "soundscape-files";
+        String presignedUrl = "http://dummy-presigned-url";
+
+        when(songRepository.findSongWithAudioFileById(any(Long.class)))
+            .thenReturn(java.util.Optional.of(mockSong));
+
+        S3Service s3ServiceMock = mock(S3Service.class);
+        when(s3ServiceMock.generatePresignedUrl(bucketName, s3Key)).thenReturn(presignedUrl);
+
+        doReturn(s3ServiceMock).when(audioStreamHandler).createS3Service();
+
+        InputStream inputStreamMock = new ByteArrayInputStream(mockAudioData);
+        doReturn(inputStreamMock).when(audioStreamHandler).openStream(presignedUrl);
+
+        TextMessage message = new TextMessage("songId:1");
+        audioStreamHandler.handleTextMessage(webSocketSession, message);
+
+        verify(webSocketSession, times(1)).sendMessage(argThat(argument ->
+            argument instanceof TextMessage && ((TextMessage) argument).getPayload().startsWith("duration:")
+        ));
+
+        verify(webSocketSession, atLeastOnce()).sendMessage(any(BinaryMessage.class));
+    }
+
 }

@@ -38,6 +38,14 @@ public class AudioStreamHandler extends BinaryWebSocketHandler {
         this.songRepository = songRepository;
     }
 
+    protected S3Service createS3Service() {
+        return new S3Service(s3AccessKeyID, s3AccessKeySecret, Region.US_EAST_2);
+    }
+
+    protected InputStream openStream(String url) throws IOException {
+        return new URL(url).openStream();
+    }
+
     @Override
     public void handleTextMessage(WebSocketSession session, TextMessage message) {
         String payload = message.getPayload();
@@ -73,11 +81,11 @@ public class AudioStreamHandler extends BinaryWebSocketHandler {
         }
 
         String bucketName = "soundscape-files";
-        S3Service s3Service = new S3Service(s3AccessKeyID, s3AccessKeySecret, Region.US_EAST_2);
-        
+
+        S3Service s3Service = createS3Service();
         String presignedUrl = s3Service.generatePresignedUrl(bucketName, s3Key);
 
-        try (InputStream inputStream = new URL(presignedUrl).openStream()) {
+        try (InputStream inputStream = openStream(presignedUrl)) {
             byte[] audioData = inputStream.readAllBytes();
 
             if (audioData.length == 0) {
