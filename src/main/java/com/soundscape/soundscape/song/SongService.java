@@ -104,12 +104,7 @@ public class SongService {
                 long durationInSeconds = mp3File.getLengthInSeconds();
                 tempAudioFile.delete();
 
-                AwsBasicCredentials awsCreds = AwsBasicCredentials.create(s3AccessKeyID, s3AccessKeySecret);
                 S3Client s3Client = createS3Client();
-                s3Client = S3Client.builder()
-                        .region(Region.US_EAST_2)
-                        .credentialsProvider(StaticCredentialsProvider.create(awsCreds))
-                        .build();
 
                 String bucketName = "soundscape-files";
                 String s3Key = "audio/" + uniqueAudioFileName;
