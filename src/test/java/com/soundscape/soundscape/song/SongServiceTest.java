@@ -38,7 +38,6 @@ import com.soundscape.soundscape.artist.dto.ArtistDTO;
 import com.soundscape.soundscape.audiofile.AudioFileRepository;
 import com.soundscape.soundscape.song.dto.SongDTO;
 import com.soundscape.soundscape.song.dto.SongUploadDTO;
-import com.soundscape.soundscape.song.image.SongImageModel;
 import com.soundscape.soundscape.song.image.SongImageRepository;
 
 class SongServiceTest {

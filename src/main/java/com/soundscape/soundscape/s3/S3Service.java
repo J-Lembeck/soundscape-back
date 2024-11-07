@@ -21,6 +21,10 @@ public class S3Service {
                 .build();
     }
 
+    public S3Service(S3Presigner presigner) {
+        this.presigner = presigner;
+    }
+
     public String generatePresignedUrl(String bucketName, String key) {
         GetObjectRequest getObjectRequest = GetObjectRequest.builder()
                 .bucket(bucketName)
@@ -28,7 +32,7 @@ public class S3Service {
                 .build();
 
         GetObjectPresignRequest presignRequest = GetObjectPresignRequest.builder()
-                .signatureDuration(Duration.ofMinutes(10)) // URL válida por 10 minutos
+                .signatureDuration(Duration.ofMinutes(10))
                 .getObjectRequest(getObjectRequest)
                 .build();
 
