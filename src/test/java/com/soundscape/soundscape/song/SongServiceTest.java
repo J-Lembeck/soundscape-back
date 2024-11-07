@@ -13,6 +13,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
@@ -32,13 +33,21 @@ import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.acrcloud.utils.ACRCloudRecognizer;
+import com.mpatric.mp3agic.Mp3File;
 import com.soundscape.soundscape.artist.ArtistModel;
 import com.soundscape.soundscape.artist.ArtistRepository;
 import com.soundscape.soundscape.artist.dto.ArtistDTO;
+import com.soundscape.soundscape.audiofile.AudioFileModel;
 import com.soundscape.soundscape.audiofile.AudioFileRepository;
 import com.soundscape.soundscape.song.dto.SongDTO;
 import com.soundscape.soundscape.song.dto.SongUploadDTO;
+import com.soundscape.soundscape.song.image.SongImageModel;
 import com.soundscape.soundscape.song.image.SongImageRepository;
+
+import software.amazon.awssdk.core.sync.RequestBody;
+import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.PutObjectRequest;
+import software.amazon.awssdk.services.s3.model.PutObjectResponse;
 
 class SongServiceTest {
 	
@@ -331,4 +340,54 @@ class SongServiceTest {
         assertEquals("Song B", songs.get(0).getTitle());
         verify(songRepository, times(1)).findAllWithoutImageDataOrderByCreationDate();
     }
+
+    @Test
+    void saveSongWithAudio_SuccessfulUpload() throws Exception {
+        ArtistModel artist = new ArtistModel();
+        artist.setId(1L);
+        when(artistRepository.findByName(anyString())).thenReturn(Optional.of(artist));
+
+        byte[] audioContent = "test audio data".getBytes();
+        MockMultipartFile audioFile = new MockMultipartFile("audio", "testAudio.mp3", "audio/mpeg", audioContent);
+
+        byte[] imageContent = "test image data".getBytes();
+        MockMultipartFile imageFile = new MockMultipartFile("image", "testImage.jpg", "image/jpeg", imageContent);
+
+        SongUploadDTO songData = new SongUploadDTO();
+        songData.setAudioFile(audioFile);
+        songData.setImageFile(imageFile);
+        songData.setTitle("Test Song");
+
+        String acrResult = "{\"status\":{\"code\":1001}}";
+        ACRCloudRecognizer recognizerMock = mock(ACRCloudRecognizer.class);
+        when(recognizerMock.recognizeByFileBuffer(any(byte[].class), anyInt(), anyInt())).thenReturn(acrResult);
+
+        SongService songServiceSpy = spy(songService);
+
+        doReturn(recognizerMock).when(songServiceSpy).createRecognizer(any());
+
+        Mp3File mp3FileMock = mock(Mp3File.class);
+        when(mp3FileMock.getLengthInSeconds()).thenReturn(180L);
+        doReturn(mp3FileMock).when(songServiceSpy).createMp3File(any(File.class));
+
+        S3Client s3ClientMock = mock(S3Client.class);
+        PutObjectResponse putObjectResponseMock = mock(PutObjectResponse.class);
+        when(s3ClientMock.putObject(any(PutObjectRequest.class), any(RequestBody.class)))
+            .thenReturn(putObjectResponseMock);
+        doReturn(s3ClientMock).when(songServiceSpy).createS3Client();
+
+        when(audioFileRepository.save(any(AudioFileModel.class))).thenReturn(new AudioFileModel());
+        when(songImageRepository.save(any(SongImageModel.class))).thenReturn(new SongImageModel());
+        when(songRepository.save(any(SongModel.class))).thenReturn(new SongModel());
+
+        ResponseEntity<String> response = songServiceSpy.saveSongWithAudio("testUser", songData);
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertEquals("Song and image uploaded successfully", response.getBody());
+
+        verify(audioFileRepository, times(1)).save(any(AudioFileModel.class));
+        verify(songImageRepository, times(1)).save(any(SongImageModel.class));
+        verify(songRepository, times(1)).save(any(SongModel.class));
+    }
+
 }

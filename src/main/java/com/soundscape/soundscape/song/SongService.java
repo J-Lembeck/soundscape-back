@@ -100,12 +100,13 @@ public class SongService {
                 try (FileOutputStream fos = new FileOutputStream(tempAudioFile)) {
                     fos.write(audioData);
                 }
-                Mp3File mp3File = new Mp3File(tempAudioFile);
+                Mp3File mp3File = createMp3File(tempAudioFile);
                 long durationInSeconds = mp3File.getLengthInSeconds();
                 tempAudioFile.delete();
 
                 AwsBasicCredentials awsCreds = AwsBasicCredentials.create(s3AccessKeyID, s3AccessKeySecret);
-                S3Client s3Client = S3Client.builder()
+                S3Client s3Client = createS3Client();
+                s3Client = S3Client.builder()
                         .region(Region.US_EAST_2)
                         .credentialsProvider(StaticCredentialsProvider.create(awsCreds))
                         .build();
@@ -154,6 +155,18 @@ public class SongService {
 
     protected ACRCloudRecognizer createRecognizer(Map<String, Object> config) {
         return new ACRCloudRecognizer(config);
+    }
+
+    protected Mp3File createMp3File(File audioFile) throws Exception {
+        return new Mp3File(audioFile);
+    }
+
+    protected S3Client createS3Client() {
+        AwsBasicCredentials awsCreds = AwsBasicCredentials.create(s3AccessKeyID, s3AccessKeySecret);
+        return S3Client.builder()
+                .region(Region.US_EAST_2)
+                .credentialsProvider(StaticCredentialsProvider.create(awsCreds))
+                .build();
     }
 
     @Transactional
