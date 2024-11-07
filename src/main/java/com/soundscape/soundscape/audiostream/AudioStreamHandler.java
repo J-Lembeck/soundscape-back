@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.ByteBuffer;
 
@@ -16,6 +17,7 @@ import org.springframework.web.socket.handler.BinaryWebSocketHandler;
 
 import com.mpatric.mp3agic.InvalidDataException;
 import com.mpatric.mp3agic.Mp3File;
+import com.mpatric.mp3agic.UnsupportedTagException;
 import com.soundscape.soundscape.s3.S3Service;
 import com.soundscape.soundscape.song.SongRepository;
 
@@ -99,7 +101,7 @@ public class AudioStreamHandler extends BinaryWebSocketHandler {
             }
 
             try {
-                Mp3File mp3file = new Mp3File(tempAudioFile);
+                Mp3File mp3file = createMp3File(tempAudioFile);
                 long durationInSeconds = mp3file.getLengthInSeconds();
                 session.sendMessage(new TextMessage("duration:" + durationInSeconds));
             } catch (InvalidDataException e) {
@@ -121,7 +123,15 @@ public class AudioStreamHandler extends BinaryWebSocketHandler {
     }
 
     protected InputStream downloadAudioFromS3(String audioFilePath) throws IOException {
-        URL s3Url = new URL(audioFilePath);
+        URL s3Url = createUrl(audioFilePath);
         return s3Url.openStream();
+    }
+
+    protected URL createUrl(String audioFilePath) throws MalformedURLException {
+        return new URL(audioFilePath);
+    }
+
+    protected Mp3File createMp3File(File file) throws IOException, UnsupportedTagException, InvalidDataException {
+        return new Mp3File(file);
     }
 }
