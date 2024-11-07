@@ -141,6 +141,14 @@
 		    <version>20230227</version>
 		</dependency>
 
+		<!-- Amazon S3 -->
+		<dependency>
+		    <groupId>software.amazon.awssdk</groupId>
+		    <artifactId>s3</artifactId>
+		    <version>2.17.89</version>
+		</dependency>
+
+
 	</dependencies>
 
 	<build>

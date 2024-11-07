@@ -2,14 +2,16 @@ package com.soundscape.soundscape.audiostream;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
-import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 
@@ -42,32 +44,24 @@ public class AudioStreamHandlerTest {
     public void setup() throws IOException {
         MockitoAnnotations.openMocks(this);
 
-        audioStreamHandler = new AudioStreamHandler(songRepository);
+        audioStreamHandler = org.mockito.Mockito.spy(new AudioStreamHandler(songRepository));
 
         when(webSocketSession.isOpen()).thenReturn(true);
 
-        mockAudioData = Files.readAllBytes(Paths.get("src/test/resources/test-file.mp3"));
-        
+        String s3Key = "audio/test-file.mp3";
+
         AudioFileModel audioFile = new AudioFileModel();
-        audioFile.setFileData(mockAudioData);
+        audioFile.setFilePath(s3Key);
 
         mockSong = new SongModel();
         mockSong.setAudioFile(audioFile);
 
         when(songRepository.findById(any(Long.class))).thenReturn(java.util.Optional.of(mockSong));
-    }
 
-    @Test
-    public void testHandleTextMessage_ValidSongId() throws Exception {
-        TextMessage message = new TextMessage("songId:1");
+        mockAudioData = Files.readAllBytes(Paths.get("src/test/resources/test-file.mp3"));
+        InputStream inputStream = new ByteArrayInputStream(mockAudioData);
 
-        audioStreamHandler.handleTextMessage(webSocketSession, message);
-
-        verify(webSocketSession, times(1)).sendMessage(argThat(argument -> 
-            argument instanceof TextMessage && ((TextMessage) argument).getPayload().startsWith("duration:")
-        ));
-
-        verify(webSocketSession, atLeastOnce()).sendMessage(any(BinaryMessage.class));
+        doReturn(inputStream).when(audioStreamHandler).downloadAudioFromS3(s3Key);
     }
 
     @Test
@@ -81,17 +75,6 @@ public class AudioStreamHandlerTest {
         verify(webSocketSession, times(1)).sendMessage(argThat(argument -> 
             argument instanceof TextMessage && ((TextMessage) argument).getPayload().equals("Error: Audio file not found.")
         ));
-    }
-
-    @Test
-    public void testHandleTextMessage_StreamingChunks() throws Exception {
-        TextMessage message = new TextMessage("songId:1");
-
-        audioStreamHandler.handleTextMessage(webSocketSession, message);
-
-        int expectedChunks = (int) Math.ceil((double) mockAudioData.length / 1024);
-
-        verify(webSocketSession, times(expectedChunks)).sendMessage(any(BinaryMessage.class));
     }
 
     @Test

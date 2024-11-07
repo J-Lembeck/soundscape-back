@@ -31,6 +31,12 @@ import com.soundscape.soundscape.song.image.SongImageModel;
 import com.soundscape.soundscape.song.image.SongImageRepository;
 
 import jakarta.transaction.Transactional;
+import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
+import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
+import software.amazon.awssdk.core.sync.RequestBody;
+import software.amazon.awssdk.regions.Region;
+import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 
 @Service
 public class SongService {
@@ -51,9 +57,11 @@ public class SongService {
     private String accessKey = System.getenv("ACR_ACCESS_KEY");
     private String accessSecret = System.getenv("ACR_ACCESS_SECRET");
     private String acrHost = System.getenv("ACR_HOST");
+    private String s3AccessKeyID = System.getenv("AWS_ACCESS_KEY_ID");
+    private String s3AccessKeySecret = System.getenv("AWS_ACCESS_KEY_SECRET");
 
     public ResponseEntity<String> saveSongWithAudio(String userName, SongUploadDTO songData) throws IOException {
-    	ArtistModel artist = artistRepository.findByName(userName)
+        ArtistModel artist = artistRepository.findByName(userName)
                 .orElseThrow(() -> new IllegalArgumentException("Artist not found"));
 
         try {
@@ -72,7 +80,6 @@ public class SongService {
             config.put("timeout", 10);
 
             ACRCloudRecognizer recognizer = new ACRCloudRecognizer(config);
-
             String result = recognizer.recognizeByFileBuffer(audioData, audioData.length, 0);
 
             JSONObject resultJson = new JSONObject(result);
@@ -89,21 +96,36 @@ public class SongService {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN)
                         .body("Upload failed: The song matches a copyrighted song: " + matchedTitle + " by " + matchedArtist);
             } else {
-                AudioFileModel audioFileModel = new AudioFileModel();
-                audioFileModel.setFileName(uniqueAudioFileName);
-                audioFileModel.setFileData(IOUtils.toByteArray(songData.getAudioFile().getInputStream()));
-                audioFileModel.setSize(songData.getAudioFile().getSize());
-                audioFileModel.setCreationDate(currentDate);
-
-                audioFileRepository.save(audioFileModel);
-
                 File tempAudioFile = File.createTempFile("tempAudio", audioFileExtension);
                 try (FileOutputStream fos = new FileOutputStream(tempAudioFile)) {
                     fos.write(audioData);
                 }
-
                 Mp3File mp3File = new Mp3File(tempAudioFile);
                 long durationInSeconds = mp3File.getLengthInSeconds();
+                tempAudioFile.delete();
+
+                AwsBasicCredentials awsCreds = AwsBasicCredentials.create(s3AccessKeyID, s3AccessKeySecret);
+                S3Client s3Client = S3Client.builder()
+                        .region(Region.US_EAST_2)
+                        .credentialsProvider(StaticCredentialsProvider.create(awsCreds))
+                        .build();
+
+                String bucketName = "soundscape-files";
+                String s3Key = "audio/" + uniqueAudioFileName;
+
+                s3Client.putObject(PutObjectRequest.builder()
+                                .bucket(bucketName)
+                                .key(s3Key)
+                                .build(),
+                        RequestBody.fromBytes(audioData));
+
+                AudioFileModel audioFileModel = new AudioFileModel();
+                audioFileModel.setFileName(uniqueAudioFileName);
+                audioFileModel.setFilePath(s3Key);
+                audioFileModel.setSize(songData.getAudioFile().getSize());
+                audioFileModel.setCreationDate(currentDate);
+
+                audioFileRepository.save(audioFileModel);
 
                 SongModel songModel = new SongModel();
                 songModel.setTitle(songData.getTitle());
@@ -120,7 +142,6 @@ public class SongService {
                 songModel.setCreationDate(currentDate);
 
                 songRepository.save(songModel);
-                tempAudioFile.delete();
 
                 return ResponseEntity.ok("Song and image uploaded successfully");
             }
