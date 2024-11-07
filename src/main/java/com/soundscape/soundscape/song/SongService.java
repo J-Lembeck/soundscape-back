@@ -79,7 +79,7 @@ public class SongService {
             config.put("access_secret", accessSecret);
             config.put("timeout", 10);
 
-            ACRCloudRecognizer recognizer = new ACRCloudRecognizer(config);
+            ACRCloudRecognizer recognizer = createRecognizer(config);
             String result = recognizer.recognizeByFileBuffer(audioData, audioData.length, 0);
 
             JSONObject resultJson = new JSONObject(result);
@@ -150,6 +150,10 @@ public class SongService {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("Failed to upload song and image: " + e.getMessage());
         }
+    }
+
+    protected ACRCloudRecognizer createRecognizer(Map<String, Object> config) {
+        return new ACRCloudRecognizer(config);
     }
 
     @Transactional
