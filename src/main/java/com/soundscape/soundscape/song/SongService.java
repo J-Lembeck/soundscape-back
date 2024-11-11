@@ -15,7 +15,10 @@ import org.apache.commons.io.IOUtils;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ContentDisposition;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
@@ -33,9 +36,13 @@ import com.soundscape.soundscape.song.image.SongImageRepository;
 import jakarta.transaction.Transactional;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
+import software.amazon.awssdk.core.ResponseInputStream;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.GetObjectRequest;
+import software.amazon.awssdk.services.s3.model.GetObjectResponse;
+import software.amazon.awssdk.services.s3.model.NoSuchKeyException;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 
 @Service
@@ -232,6 +239,44 @@ public class SongService {
             e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("Falha ao processar a ação: " + e.getMessage());
+        }
+    }
+
+    public ResponseEntity<byte[]> downloadAudioFile(String userName, Long songId) {
+        try {
+        	 artistRepository.findByName(userName)
+                     .orElseThrow(() -> new IllegalArgumentException("Artist not found."));
+
+            SongModel song = songRepository.findById(songId)
+                    .orElseThrow(() -> new IllegalArgumentException("Song not found"));
+
+            AudioFileModel audioFile = song.getAudioFile();
+            String s3Key = audioFile.getFilePath();
+
+            S3Client s3Client = createS3Client();
+            String bucketName = "soundscape-files";
+
+            GetObjectRequest getObjectRequest = GetObjectRequest.builder()
+                    .bucket(bucketName)
+                    .key(s3Key)
+                    .build();
+            ResponseInputStream<GetObjectResponse> s3Object = s3Client.getObject(getObjectRequest);
+
+            byte[] audioData = IOUtils.toByteArray(s3Object);
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
+            headers.setContentDisposition(ContentDisposition.attachment().filename(audioFile.getFileName()).build());
+
+            return new ResponseEntity<>(audioData, headers, HttpStatus.OK);
+
+        } catch (NoSuchKeyException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(("Error: " + e.getMessage()).getBytes());
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
         }
     }
 }

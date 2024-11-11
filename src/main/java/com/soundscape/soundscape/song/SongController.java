@@ -84,4 +84,12 @@ public class SongController {
 	     
 	     return songService.likeSong(userName, songId);
 	}
+
+	@GetMapping(path="/downloadSong")
+	public ResponseEntity<byte[]> downloadSong(@RequestHeader(HttpHeaders.AUTHORIZATION) String authHeader, @RequestParam Long songId) {
+		 String token = authHeader.substring(7);
+	     String userName = jwtTokenUtil.getUsernameFromToken(token);
+
+	     return songService.downloadAudioFile(userName, songId);
+	}
 }

@@ -35,10 +35,14 @@ import com.acrcloud.utils.ACRCloudRecognizer;
 import com.soundscape.soundscape.artist.ArtistModel;
 import com.soundscape.soundscape.artist.ArtistRepository;
 import com.soundscape.soundscape.artist.dto.ArtistDTO;
+import com.soundscape.soundscape.audiofile.AudioFileModel;
 import com.soundscape.soundscape.audiofile.AudioFileRepository;
 import com.soundscape.soundscape.song.dto.SongDTO;
 import com.soundscape.soundscape.song.dto.SongUploadDTO;
 import com.soundscape.soundscape.song.image.SongImageRepository;
+
+import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 
 class SongServiceTest {
 	
@@ -56,6 +60,9 @@ class SongServiceTest {
 
     @Mock
     private SongImageRepository songImageRepository;
+
+    @Mock
+    private S3Client s3Client;
 
     @BeforeEach
     void setUp() {
@@ -330,5 +337,47 @@ class SongServiceTest {
         assertEquals(2, songs.size());
         assertEquals("Song B", songs.get(0).getTitle());
         verify(songRepository, times(1)).findAllWithoutImageDataOrderByCreationDate();
+    }
+
+    @Test
+    void downloadAudioFile_ArtistNotFound() {
+        when(artistRepository.findByName("testUser")).thenReturn(Optional.empty());
+
+        ResponseEntity<byte[]> response = songService.downloadAudioFile("testUser", 1L);
+
+        assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+        assertEquals("Error: Artist not found.", new String(response.getBody()));
+    }
+
+    @Test
+    void downloadAudioFile_SongNotFound() {
+        ArtistModel artist = new ArtistModel();
+        artist.setName("testUser");
+        when(artistRepository.findByName("testUser")).thenReturn(Optional.of(artist));
+        when(songRepository.findById(1L)).thenReturn(Optional.empty());
+
+        ResponseEntity<byte[]> response = songService.downloadAudioFile("testUser", 1L);
+
+        assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+        assertEquals("Error: Song not found", new String(response.getBody()));
+    }
+
+    @Test
+    void downloadAudioFile_InternalServerError() {
+        ArtistModel artist = new ArtistModel();
+        artist.setName("testUser");
+        SongModel song = new SongModel();
+        AudioFileModel audioFile = new AudioFileModel();
+        audioFile.setFilePath("audio/testFile.mp3");
+        song.setAudioFile(audioFile);
+
+        when(artistRepository.findByName("testUser")).thenReturn(Optional.of(artist));
+        when(songRepository.findById(1L)).thenReturn(Optional.of(song));
+        when(s3Client.getObject(any(GetObjectRequest.class))).thenThrow(RuntimeException.class);
+
+        ResponseEntity<byte[]> response = songService.downloadAudioFile("testUser", 1L);
+
+        assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
+        assertEquals(null, response.getBody());
     }
 }

@@ -1,7 +1,10 @@
 package com.soundscape.soundscape.song;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import java.io.IOException;
@@ -13,6 +16,8 @@ import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
 import com.soundscape.soundscape.security.JwtTokenUtil;
@@ -147,5 +152,42 @@ public class SongControllerTest {
 
         assertEquals(response, result);
         verify(songService).likeSong(username, songId);
+    }
+
+    @Test
+    void downloadSong_shouldReturnAudioFileBytes() {
+        String authHeader = "Bearer test-token";
+        String username = "testUser";
+        Long songId = 1L;
+        byte[] audioBytes = new byte[]{10, 20, 30};
+        ResponseEntity<byte[]> responseEntity = ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"song.mp3\"")
+                .body(audioBytes);
+
+        when(jwtTokenUtil.getUsernameFromToken("test-token")).thenReturn(username);
+        when(songService.downloadAudioFile(username, songId)).thenReturn(responseEntity);
+
+        ResponseEntity<byte[]> result = songController.downloadSong(authHeader, songId);
+
+        assertEquals(HttpStatus.OK, result.getStatusCode());
+        assertArrayEquals(audioBytes, result.getBody());
+        assertEquals("attachment; filename=\"song.mp3\"", result.getHeaders().getFirst(HttpHeaders.CONTENT_DISPOSITION));
+        verify(songService).downloadAudioFile(username, songId);
+    }
+
+    @Test
+    void downloadSong_withInvalidToken_shouldReturnUnauthorized() {
+        String authHeader = "Bearer invalid-token";
+        Long songId = 1L;
+
+        when(jwtTokenUtil.getUsernameFromToken("invalid-token")).thenThrow(new IllegalArgumentException("Invalid token"));
+
+        Exception exception = assertThrows(IllegalArgumentException.class, () -> {
+            songController.downloadSong(authHeader, songId);
+        });
+
+        assertEquals("Invalid token", exception.getMessage());
+        verify(jwtTokenUtil).getUsernameFromToken("invalid-token");
+        verifyNoInteractions(songService);
     }
 }
