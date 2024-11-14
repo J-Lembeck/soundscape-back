@@ -33,7 +33,7 @@ public class SecurityConfig {
 			return corsConfig;
 		})).sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 				.authorizeHttpRequests(
-						auth -> auth.requestMatchers("/auth/**").permitAll().requestMatchers("/audio-stream/**")
+						auth -> auth.requestMatchers("/actuator/**").permitAll().requestMatchers("/auth/**").permitAll().requestMatchers("/audio-stream/**")
 								.permitAll().requestMatchers("/songs/**").permitAll().anyRequest().permitAll());
 		;
 
