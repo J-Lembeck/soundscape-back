@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -68,4 +69,73 @@ public class ArtistService {
 
 		return new ArtistFactory().buildDTO(artist);
 	}
+
+	@Transactional
+	public ResponseEntity<String> followArtist(String userName, Long artistToFollowId) {
+	    try {
+	        ArtistModel follower = artistRepository.findByName(userName)
+	            .orElseThrow(() -> new IllegalArgumentException("Artista não encontrado com o email: " + userName));
+
+	        ArtistModel artistToFollow = artistRepository.findById(artistToFollowId)
+	            .orElseThrow(() -> new IllegalArgumentException("Artista não encontrado com o ID: " + artistToFollowId));
+
+	        if (artistToFollow.getFollowers().contains(follower)) {
+	            return ResponseEntity.badRequest().body("Você já segue este artista.");
+	        }
+
+	        artistToFollow.getFollowers().add(follower);
+	        artistRepository.save(artistToFollow);
+
+	        return ResponseEntity.ok("Artista seguido com sucesso.");
+	    } catch (Exception e) {
+	        e.printStackTrace();
+	        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Ocorreu um erro ao seguir o artista.");
+	    }
+	}
+
+	@Transactional
+	public ResponseEntity<String> unfollowArtist(String userName, Long artistToUnfollowId) {
+	    try {
+	        ArtistModel follower = artistRepository.findByName(userName)
+	            .orElseThrow(() -> new IllegalArgumentException("Artista não encontrado com o nome: " + userName));
+
+	        ArtistModel artistToUnfollow = artistRepository.findById(artistToUnfollowId)
+	            .orElseThrow(() -> new IllegalArgumentException("Artista não encontrado com o ID: " + artistToUnfollowId));
+
+	        if (!artistToUnfollow.getFollowers().contains(follower)) {
+	            return ResponseEntity.badRequest().body("Você não segue este artista.");
+	        }
+
+	        artistToUnfollow.getFollowers().remove(follower);
+	        artistRepository.save(artistToUnfollow);
+
+	        return ResponseEntity.ok("Você deixou de seguir o artista com sucesso.");
+	    } catch (Exception e) {
+	        e.printStackTrace();
+	        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+	            .body("Ocorreu um erro ao deixar de seguir o artista.");
+	    }
+	}
+
+//	@Transactional
+//	public List<ArtistDTO> findArtistsFollowedByUser(Long artistId) {
+//	    ArtistModel artist = artistRepository.findById(artistId)
+//	            .orElseThrow(() -> new IllegalArgumentException("Artist not found."));
+//
+//	    return artist.getFollowing().stream()
+//	            .map(followedArtist -> new ArtistFactory().buildDTO(followedArtist))
+//	            .collect(Collectors.toList());
+//	}
+
+	@Transactional
+	public List<ArtistDTO> findFollowersOfUser(Long artistId) {
+	    ArtistModel artist = artistRepository.findById(artistId)
+	            .orElseThrow(() -> new IllegalArgumentException("Artist not found."));
+
+	    return artist.getFollowers().stream()
+	            .map(follower -> new ArtistFactory().buildDTO(follower))
+	            .collect(Collectors.toList());
+	}
+
+
 }

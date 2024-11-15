@@ -19,4 +19,19 @@
         </createTable>
     </changeSet>
 
+    <changeSet id="CREATE_ARTIST_FOLLOWERS" author="João Vitor Lembeck">
+        <createTable tableName="artist_followers">
+            <column name="artist_id" type="bigint">
+                <constraints nullable="false" foreignKeyName="fk_artist_followers_artist"
+                    references="artists(id)"/>
+            </column>
+            <column name="follower_id" type="bigint">
+                <constraints nullable="false" foreignKeyName="fk_artist_followers_follower"
+                    references="artists(id)"/>
+            </column>
+        </createTable>
+
+        <addPrimaryKey columnNames="artist_id, follower_id" tableName="artist_followers" constraintName="pk_artist_followers"/>
+    </changeSet>
+
 </databaseChangeLog>
