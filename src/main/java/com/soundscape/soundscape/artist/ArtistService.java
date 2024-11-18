@@ -83,8 +83,8 @@ public class ArtistService {
 	            return ResponseEntity.badRequest().body("Você já segue este artista.");
 	        }
 
-	        artistToFollow.getFollowers().add(follower);
-	        artistRepository.save(artistToFollow);
+			artistToFollow.getFollowers().add(follower);
+        	follower.getFollowing().add(artistToFollow);
 
 	        return ResponseEntity.ok("Artista seguido com sucesso.");
 	    } catch (Exception e) {
