@@ -92,11 +92,6 @@ public class ArtistService {
 		}
 	}
 
-	public void addFollower(ArtistModel follower) {
-		this.followers.add(follower);
-		follower.following.add(this);
-	}
-
 	@Transactional
 	public ResponseEntity<String> unfollowArtist(String userName, Long artistToUnfollowId) {
 	    try {
@@ -118,11 +113,6 @@ public class ArtistService {
 	        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
 	            .body("Ocorreu um erro ao deixar de seguir o artista.");
 	    }
-	}
-
-	public void removeFollower(ArtistModel follower) {
-		this.followers.remove(follower);
-		follower.following.remove(this);
 	}
 
 //	@Transactional

@@ -61,4 +61,13 @@ public class ArtistModel {
 	@ManyToMany(mappedBy = "followers", fetch = FetchType.LAZY)
 	private Set<ArtistModel> following = new HashSet<>();
 
+	public void addFollower(ArtistModel follower) {
+		this.followers.add(follower);
+		follower.following.add(this);
+	}
+
+	public void removeFollower(ArtistModel follower) {
+		this.followers.remove(follower);
+		follower.following.remove(this);
+	}
 }
