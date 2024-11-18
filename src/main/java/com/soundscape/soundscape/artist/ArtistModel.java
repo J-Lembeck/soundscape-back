@@ -5,7 +5,6 @@ import java.util.HashSet;
 import java.util.Set;
 
 import com.fasterxml.jackson.annotation.JsonManagedReference;
-import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.soundscape.soundscape.song.SongModel;
 
 import jakarta.persistence.CascadeType;
@@ -51,25 +50,12 @@ public class ArtistModel {
 	private Set<SongModel> likedSongs = new HashSet<>();
 
 	@ManyToMany(fetch = FetchType.LAZY)
-	@JoinTable(
-		name = "artist_followers",
-		joinColumns = @JoinColumn(name = "artist_id"),
-		inverseJoinColumns = @JoinColumn(name = "follower_id")
-	)
-	@JsonManagedReference
-	private Set<ArtistModel> followers = new HashSet<>();
+    @JoinTable(
+        name = "artist_followers",
+        joinColumns = @JoinColumn(name = "artist_id"),
+        inverseJoinColumns = @JoinColumn(name = "follower_id")
+    )
+    @JsonManagedReference
+    private Set<ArtistModel> followers = new HashSet<>();
 
-	@ManyToMany(mappedBy = "followers", fetch = FetchType.LAZY)
-	@JsonBackReference
-	private Set<ArtistModel> following = new HashSet<>();
-
-	public void addFollower(ArtistModel follower) {
-		this.followers.add(follower);
-		follower.following.add(this);
-	}
-
-	public void removeFollower(ArtistModel follower) {
-		this.followers.remove(follower);
-		follower.following.remove(this);
-	}
 }

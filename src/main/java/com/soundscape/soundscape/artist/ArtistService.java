@@ -72,24 +72,25 @@ public class ArtistService {
 
 	@Transactional
 	public ResponseEntity<String> followArtist(String userName, Long artistToFollowId) {
-		try {
-			ArtistModel follower = artistRepository.findByName(userName)
-				.orElseThrow(() -> new IllegalArgumentException("Artista não encontrado com o email: " + userName));
+	    try {
+	        ArtistModel follower = artistRepository.findByName(userName)
+	            .orElseThrow(() -> new IllegalArgumentException("Artista não encontrado com o email: " + userName));
 
-			ArtistModel artistToFollow = artistRepository.findById(artistToFollowId)
-				.orElseThrow(() -> new IllegalArgumentException("Artista não encontrado com o ID: " + artistToFollowId));
+	        ArtistModel artistToFollow = artistRepository.findById(artistToFollowId)
+	            .orElseThrow(() -> new IllegalArgumentException("Artista não encontrado com o ID: " + artistToFollowId));
 
-			if (artistToFollow.getFollowers().contains(follower)) {
-				return ResponseEntity.badRequest().body("Você já segue este artista.");
-			}
+	        if (artistToFollow.getFollowers().contains(follower)) {
+	            return ResponseEntity.badRequest().body("Você já segue este artista.");
+	        }
 
-			artistToFollow.addFollower(follower);
+	        artistToFollow.getFollowers().add(follower);
+	        artistRepository.save(artistToFollow);
 
-			return ResponseEntity.ok("Artista seguido com sucesso.");
-		} catch (Exception e) {
-			e.printStackTrace();
-			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Ocorreu um erro ao seguir o artista.");
-		}
+	        return ResponseEntity.ok("Artista seguido com sucesso.");
+	    } catch (Exception e) {
+	        e.printStackTrace();
+	        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Ocorreu um erro ao seguir o artista.");
+	    }
 	}
 
 	@Transactional
@@ -105,7 +106,8 @@ public class ArtistService {
 	            return ResponseEntity.badRequest().body("Você não segue este artista.");
 	        }
 
-	        artistToUnfollow.removeFollower(follower);
+	        artistToUnfollow.getFollowers().remove(follower);
+	        artistRepository.save(artistToUnfollow);
 
 	        return ResponseEntity.ok("Você deixou de seguir o artista com sucesso.");
 	    } catch (Exception e) {
