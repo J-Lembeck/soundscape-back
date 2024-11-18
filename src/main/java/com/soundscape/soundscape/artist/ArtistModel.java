@@ -58,4 +58,7 @@ public class ArtistModel {
     @JsonManagedReference
     private Set<ArtistModel> followers = new HashSet<>();
 
+	@ManyToMany(mappedBy = "followers", fetch = FetchType.LAZY)
+	private Set<ArtistModel> following = new HashSet<>();
+
 }
