@@ -49,13 +49,17 @@ public class ArtistModel {
 	)
 	private Set<SongModel> likedSongs = new HashSet<>();
 
+	@ManyToMany(mappedBy = "following", fetch = FetchType.LAZY)
+	@JsonBackReference
+	private Set<ArtistModel> followers = new HashSet<>();
+
 	@ManyToMany(fetch = FetchType.LAZY)
-    @JoinTable(
-        name = "artist_followers",
-        joinColumns = @JoinColumn(name = "artist_id"),
-        inverseJoinColumns = @JoinColumn(name = "follower_id")
-    )
-    @JsonManagedReference
-    private Set<ArtistModel> followers = new HashSet<>();
+	@JoinTable(
+		name = "artist_followers",
+		joinColumns = @JoinColumn(name = "artist_id"),
+		inverseJoinColumns = @JoinColumn(name = "follower_id")
+	)
+	@JsonManagedReference
+	private Set<ArtistModel> following = new HashSet<>();
 
 }
