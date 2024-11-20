@@ -1,5 +1,6 @@
 package com.soundscape.soundscape.artist;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -9,6 +10,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.validation.annotation.Validated;
 
 import com.soundscape.soundscape.artist.dto.ArtistDTO;
 import com.soundscape.soundscape.artist.dto.ArtistRegistrationDTO;
@@ -26,13 +28,20 @@ public class ArtistService {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
-    public ResponseEntity<String> registerArtist(ArtistRegistrationDTO registrationDTO) {
+    @Validated
+    public ResponseEntity<Object> registerArtist(ArtistRegistrationDTO registrationDTO) {
+        List<String> errors = new ArrayList<>();
+
         if (artistRepository.existsByEmail(registrationDTO.getEmail())) {
-            return ResponseEntity.status(409).body("Email já está em uso.");
+            errors.add("Email já está em uso.");
         }
 
         if (artistRepository.existsByName(registrationDTO.getName())) {
-            return ResponseEntity.status(409).body("Nome de usuário já está em uso.");
+            errors.add("Nome de usuário já está em uso.");
+        }
+
+        if (!errors.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(errors);
         }
 
         String encodedPassword = passwordEncoder.encode(registrationDTO.getPassword());

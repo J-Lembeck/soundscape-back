@@ -2,6 +2,7 @@ package com.soundscape.soundscape.artist;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -53,7 +54,7 @@ class ArtistServiceTest {
         when(artistRepository.existsByName(anyString())).thenReturn(false);
         when(passwordEncoder.encode(anyString())).thenReturn("encodedPassword");
 
-        ResponseEntity<String> response = artistService.registerArtist(registrationDTO);
+        ResponseEntity<Object> response = artistService.registerArtist(registrationDTO);
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertEquals("Artista registrado com sucesso.", response.getBody());
@@ -65,11 +66,18 @@ class ArtistServiceTest {
         ArtistRegistrationDTO registrationDTO = new ArtistRegistrationDTO("testUser", "test@example.com", "password");
 
         when(artistRepository.existsByEmail(anyString())).thenReturn(true);
+        when(artistRepository.existsByName(anyString())).thenReturn(false);
 
-        ResponseEntity<String> response = artistService.registerArtist(registrationDTO);
+        ResponseEntity<Object> response = artistService.registerArtist(registrationDTO);
 
         assertEquals(HttpStatus.CONFLICT, response.getStatusCode());
-        assertEquals("Email já está em uso.", response.getBody());
+        assertTrue(response.getBody() instanceof List<?>);
+
+        @SuppressWarnings("unchecked")
+        List<String> errors = (List<String>) response.getBody();
+
+        assertEquals(1, errors.size());
+        assertTrue(errors.contains("Email já está em uso."));
         verify(artistRepository, never()).save(any(ArtistModel.class));
     }
 
@@ -80,10 +88,37 @@ class ArtistServiceTest {
         when(artistRepository.existsByEmail(anyString())).thenReturn(false);
         when(artistRepository.existsByName(anyString())).thenReturn(true);
 
-        ResponseEntity<String> response = artistService.registerArtist(registrationDTO);
+        ResponseEntity<Object> response = artistService.registerArtist(registrationDTO);
 
         assertEquals(HttpStatus.CONFLICT, response.getStatusCode());
-        assertEquals("Nome de usuário já está em uso.", response.getBody());
+        assertTrue(response.getBody() instanceof List<?>);
+
+        @SuppressWarnings("unchecked")
+        List<String> errors = (List<String>) response.getBody();
+
+        assertEquals(1, errors.size());
+        assertTrue(errors.contains("Nome de usuário já está em uso."));
+        verify(artistRepository, never()).save(any(ArtistModel.class));
+    }
+
+    @Test
+    void registerArtist_MultipleErrors() {
+        ArtistRegistrationDTO registrationDTO = new ArtistRegistrationDTO("testUser", "test@example.com", "password");
+
+        when(artistRepository.existsByEmail(anyString())).thenReturn(true);
+        when(artistRepository.existsByName(anyString())).thenReturn(true);
+
+        ResponseEntity<Object> response = artistService.registerArtist(registrationDTO);
+
+        assertEquals(HttpStatus.CONFLICT, response.getStatusCode());
+        assertTrue(response.getBody() instanceof List<?>);
+
+        @SuppressWarnings("unchecked")
+        List<String> errors = (List<String>) response.getBody();
+
+        assertEquals(2, errors.size());
+        assertTrue(errors.contains("Email já está em uso."));
+        assertTrue(errors.contains("Nome de usuário já está em uso."));
         verify(artistRepository, never()).save(any(ArtistModel.class));
     }
 

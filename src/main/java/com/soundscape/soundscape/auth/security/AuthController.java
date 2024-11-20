@@ -46,7 +46,7 @@ public class AuthController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<String> createAuthenticationToken(@RequestBody ArtistRegistrationDTO registrationDTO) {
+    public ResponseEntity<Object> createAuthenticationToken(@RequestBody ArtistRegistrationDTO registrationDTO) {
     	return artistService.registerArtist(registrationDTO);
     }
 

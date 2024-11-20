@@ -1,5 +1,7 @@
 package com.soundscape.soundscape.auth.security;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
@@ -7,11 +9,14 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.util.List;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -88,14 +93,39 @@ class AuthControllerTest {
     void testRegisterArtist_Success() {
         ArtistRegistrationDTO registrationDTO = new ArtistRegistrationDTO("newuser", "password", "email@test.com");
 
-        when(artistService.registerArtist(registrationDTO)).thenReturn(ResponseEntity.ok("Artist registered"));
+        when(artistService.registerArtist(registrationDTO))
+                .thenReturn(ResponseEntity.ok("Artista registrado com sucesso."));
 
-        ResponseEntity<String> response = authController.createAuthenticationToken(registrationDTO);
+        ResponseEntity<Object> response = authController.createAuthenticationToken(registrationDTO);
 
         verify(artistService, times(1)).registerArtist(eq(registrationDTO));
 
         assert response.getBody() != null;
-        assert response.getBody().equals("Artist registered");
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertEquals("Artista registrado com sucesso.", response.getBody());
+    }
+
+    @Test
+    void testRegisterArtist_ValidationErrors() {
+        ArtistRegistrationDTO registrationDTO = new ArtistRegistrationDTO("newuser", "password", "email@test.com");
+
+        List<String> errors = List.of("Email já está em uso.", "Nome de usuário já está em uso.");
+        when(artistService.registerArtist(registrationDTO))
+                .thenReturn(ResponseEntity.status(HttpStatus.CONFLICT).body(errors));
+
+        ResponseEntity<Object> response = authController.createAuthenticationToken(registrationDTO);
+
+        verify(artistService, times(1)).registerArtist(eq(registrationDTO));
+
+        assert response.getBody() != null;
+        assertEquals(HttpStatus.CONFLICT, response.getStatusCode());
+        assertTrue(response.getBody() instanceof List<?>);
+
+        @SuppressWarnings("unchecked")
+        List<String> responseErrors = (List<String>) response.getBody();
+        assertEquals(2, responseErrors.size());
+        assertTrue(responseErrors.contains("Email já está em uso."));
+        assertTrue(responseErrors.contains("Nome de usuário já está em uso."));
     }
 
     @Test
