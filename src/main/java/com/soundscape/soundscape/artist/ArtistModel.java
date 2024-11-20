@@ -2,6 +2,7 @@ package com.soundscape.soundscape.artist;
 
 import java.util.Date;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 
 import com.fasterxml.jackson.annotation.JsonManagedReference;
@@ -49,7 +50,7 @@ public class ArtistModel {
 	)
 	private Set<SongModel> likedSongs = new HashSet<>();
 
-	@ManyToMany(fetch = FetchType.LAZY)
+    @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
         name = "artist_followers",
         joinColumns = @JoinColumn(name = "artist_id"),
@@ -58,4 +59,22 @@ public class ArtistModel {
     @JsonManagedReference
     private Set<ArtistModel> followers = new HashSet<>();
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        ArtistModel that = (ArtistModel) o;
+        return Objects.equals(id, that.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id);
+    }
+
+    public void removeFollower(ArtistModel follower) {
+        if (this.followers.remove(follower)) {
+            follower.getFollowers().remove(this);
+        }
+    }
 }

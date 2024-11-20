@@ -74,10 +74,10 @@ public class ArtistService {
 	public ResponseEntity<String> followArtist(String userName, Long artistToFollowId) {
 	    try {
 	        ArtistModel follower = artistRepository.findByName(userName)
-	            .orElseThrow(() -> new IllegalArgumentException("Artista não encontrado com o email: " + userName));
+	                .orElseThrow(() -> new IllegalArgumentException("Artista não encontrado com o nome: " + userName));
 
 	        ArtistModel artistToFollow = artistRepository.findById(artistToFollowId)
-	            .orElseThrow(() -> new IllegalArgumentException("Artista não encontrado com o ID: " + artistToFollowId));
+	                .orElseThrow(() -> new IllegalArgumentException("Artista não encontrado com o ID: " + artistToFollowId));
 
 	        if (artistToFollow.getFollowers().contains(follower)) {
 	            return ResponseEntity.badRequest().body("Você já segue este artista.");
@@ -117,15 +117,16 @@ public class ArtistService {
 	    }
 	}
 
-//	@Transactional
-//	public List<ArtistDTO> findArtistsFollowedByUser(Long artistId) {
-//	    ArtistModel artist = artistRepository.findById(artistId)
-//	            .orElseThrow(() -> new IllegalArgumentException("Artist not found."));
-//
-//	    return artist.getFollowing().stream()
-//	            .map(followedArtist -> new ArtistFactory().buildDTO(followedArtist))
-//	            .collect(Collectors.toList());
-//	}
+	@Transactional
+	public List<ArtistDTO> findArtistsFollowedByUser(String userName) {
+	    ArtistModel follower = artistRepository.findByName(userName)
+	            .orElseThrow(() -> new IllegalArgumentException("Artista não encontrado com o nome: " + userName));
+
+	    return artistRepository.findAll().stream()
+	            .filter(artist -> artist.getFollowers().contains(follower))
+	            .map(artist -> new ArtistFactory().buildDTO(artist))
+	            .collect(Collectors.toList());
+	}
 
 	@Transactional
 	public List<ArtistDTO> findFollowersOfUser(Long artistId) {
@@ -136,6 +137,5 @@ public class ArtistService {
 	            .map(follower -> new ArtistFactory().buildDTO(follower))
 	            .collect(Collectors.toList());
 	}
-
 
 }

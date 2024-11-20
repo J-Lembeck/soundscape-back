@@ -52,10 +52,13 @@ public class ArtistController {
 	    return artistService.followArtist(userName, artistToFollowId);
 	}
 
-//	@GetMapping(path="/findFollowedByUser")
-//	public List<ArtistDTO> findFollowedByUser(@RequestParam Long artistId) {
-//		return artistService.findArtistsFollowedByUser(artistId);
-//	}
+	@GetMapping(path="/findFollowedByUser")
+	public List<ArtistDTO> findFollowedByUser(@RequestHeader(HttpHeaders.AUTHORIZATION) String authHeader) {
+		String token = authHeader.substring(7);
+	    String userName = jwtTokenUtil.getUsernameFromToken(token);
+
+		return artistService.findArtistsFollowedByUser(userName);
+	}
 
 	@PostMapping("/unfollowArtist")
     public ResponseEntity<String> unfollowArtist(@RequestHeader(HttpHeaders.AUTHORIZATION) String authHeader, @RequestParam Long artistToUnfollowId) {
