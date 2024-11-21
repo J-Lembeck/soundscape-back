@@ -12,6 +12,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -201,4 +202,148 @@ class ArtistServiceTest {
         });
         assertEquals("Artist not found", exception.getMessage());
     }
+
+    @Test
+    void followArtist_Success() {
+        ArtistModel follower = new ArtistModel();
+        follower.setName("testUser");
+
+        ArtistModel artistToFollow = new ArtistModel();
+        artistToFollow.setId(1L);
+        artistToFollow.setName("ArtistToFollow");
+
+        when(artistRepository.findByName("testUser")).thenReturn(Optional.of(follower));
+        when(artistRepository.findById(1L)).thenReturn(Optional.of(artistToFollow));
+
+        ResponseEntity<String> response = artistService.followArtist("testUser", 1L);
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertEquals("Artista seguido com sucesso.", response.getBody());
+        assertTrue(artistToFollow.getFollowers().contains(follower));
+        verify(artistRepository, times(1)).save(artistToFollow);
+    }
+
+    @Test
+    void followArtist_AlreadyFollowing() {
+        ArtistModel follower = new ArtistModel();
+        follower.setName("testUser");
+
+        ArtistModel artistToFollow = new ArtistModel();
+        artistToFollow.setId(1L);
+        artistToFollow.setName("ArtistToFollow");
+        artistToFollow.setFollowers(Set.of(follower));
+
+        when(artistRepository.findByName("testUser")).thenReturn(Optional.of(follower));
+        when(artistRepository.findById(1L)).thenReturn(Optional.of(artistToFollow));
+
+        ResponseEntity<String> response = artistService.followArtist("testUser", 1L);
+
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        assertEquals("Você já segue este artista.", response.getBody());
+        verify(artistRepository, never()).save(artistToFollow);
+    }
+
+    @Test
+    void followArtist_InternalServerError() {
+        when(artistRepository.findByName("testUser")).thenThrow(new RuntimeException("Database error"));
+
+        ResponseEntity<String> response = artistService.followArtist("testUser", 1L);
+
+        assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
+        assertEquals("Ocorreu um erro ao seguir o artista.", response.getBody());
+        verify(artistRepository, times(1)).findByName("testUser");
+        verify(artistRepository, never()).save(any());
+    }
+
+    @Test
+    void unfollowArtist_Success() {
+        ArtistModel follower = new ArtistModel();
+        follower.setName("testUser");
+
+        ArtistModel artistToUnfollow = new ArtistModel();
+        artistToUnfollow.setId(1L);
+        artistToUnfollow.setName("ArtistToUnfollow");
+        artistToUnfollow.setFollowers(new HashSet<>(Set.of(follower)));
+
+        when(artistRepository.findByName("testUser")).thenReturn(Optional.of(follower));
+        when(artistRepository.findById(1L)).thenReturn(Optional.of(artistToUnfollow));
+
+        ResponseEntity<String> response = artistService.unfollowArtist("testUser", 1L);
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertEquals("Você deixou de seguir o artista com sucesso.", response.getBody());
+        assertTrue(artistToUnfollow.getFollowers().isEmpty());
+        verify(artistRepository, times(1)).save(artistToUnfollow);
+    }
+
+    @Test
+    void unfollowArtist_NotFollowing() {
+        ArtistModel follower = new ArtistModel();
+        follower.setName("testUser");
+
+        ArtistModel artistToUnfollow = new ArtistModel();
+        artistToUnfollow.setId(1L);
+        artistToUnfollow.setName("ArtistToUnfollow");
+
+        when(artistRepository.findByName("testUser")).thenReturn(Optional.of(follower));
+        when(artistRepository.findById(1L)).thenReturn(Optional.of(artistToUnfollow));
+
+        ResponseEntity<String> response = artistService.unfollowArtist("testUser", 1L);
+
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        assertEquals("Você não segue este artista.", response.getBody());
+        verify(artistRepository, never()).save(artistToUnfollow);
+    }
+
+    @Test
+    void unfollowArtist_InternalServerError() {
+        when(artistRepository.findByName("testUser")).thenThrow(new RuntimeException("Database error"));
+
+        ResponseEntity<String> response = artistService.unfollowArtist("testUser", 1L);
+
+        assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
+        assertEquals("Ocorreu um erro ao deixar de seguir o artista.", response.getBody());
+        verify(artistRepository, times(1)).findByName("testUser");
+        verify(artistRepository, never()).save(any());
+    }
+
+    @Test
+    void findArtistsFollowedByUser_Success() {
+        ArtistModel follower = new ArtistModel();
+        follower.setName("testUser");
+
+        ArtistModel followedArtist = new ArtistModel();
+        followedArtist.setId(1L);
+        followedArtist.setName("FollowedArtist");
+        followedArtist.setFollowers(Set.of(follower));
+
+        when(artistRepository.findByName("testUser")).thenReturn(Optional.of(follower));
+        when(artistRepository.findAll()).thenReturn(List.of(followedArtist));
+
+        List<ArtistDTO> followedArtists = artistService.findArtistsFollowedByUser("testUser");
+
+        assertEquals(1, followedArtists.size());
+        assertEquals("FollowedArtist", followedArtists.get(0).getName());
+        verify(artistRepository, times(1)).findAll();
+    }
+
+    @Test
+    void findFollowersOfUser_Success() {
+        ArtistModel artist = new ArtistModel();
+        artist.setId(1L);
+        artist.setName("Artist");
+
+        ArtistModel follower = new ArtistModel();
+        follower.setName("Follower");
+        artist.setFollowers(Set.of(follower));
+
+        when(artistRepository.findById(1L)).thenReturn(Optional.of(artist));
+
+        List<ArtistDTO> followers = artistService.findFollowersOfUser(1L);
+
+        assertEquals(1, followers.size());
+        assertEquals("Follower", followers.get(0).getName());
+        verify(artistRepository, times(1)).findById(1L);
+    }
+
 }
