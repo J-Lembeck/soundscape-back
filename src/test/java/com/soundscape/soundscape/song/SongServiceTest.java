@@ -408,4 +408,19 @@ class SongServiceTest {
 
         assertNotNull(result, "Mp3File should not be null");
     }
+
+    @Test
+    void testCreateS3Client() {
+        System.setProperty("AWS_ACCESS_KEY_ID", "testAccessKeyId");
+        System.setProperty("AWS_ACCESS_KEY_SECRET", "testSecretAccessKey");
+
+        SongService songService = new SongService();
+
+        S3Client s3Client = songService.createS3Client();
+
+        assertNotNull(s3Client, "S3Client should not be null");
+
+        System.clearProperty("AWS_ACCESS_KEY_ID");
+        System.clearProperty("AWS_ACCESS_KEY_SECRET");
+    }
 }

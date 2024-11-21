@@ -118,5 +118,31 @@ public class JwtTokenUtilTest {
         assertFalse(isValid, "O token não deve ser válido devido à assinatura incorreta");
     }
 
+    @Test
+    public void testIsTokenExpired_ExpiredJwtException() {
+        String invalidToken = "invalidToken";
+
+        boolean isExpired = jwtTokenUtil.isTokenExpired(invalidToken);
+
+        assertTrue(isExpired, "O token deve ser considerado expirado quando ocorre ExpiredJwtException");
+    }
+
+    @Test
+    public void testIsTokenExpired_Exception() {
+        String malformedToken = "malformedToken";
+
+        boolean isExpired = jwtTokenUtil.isTokenExpired(malformedToken);
+
+        assertTrue(isExpired, "O token deve ser considerado expirado quando ocorre uma exceção geral");
+    }
+
+    @Test
+    public void testGetUsernameFromToken_Exception() {
+        String malformedToken = "malformedToken";
+
+        String username = jwtTokenUtil.getUsernameFromToken(malformedToken);
+
+        assertEquals(null, username, "O método deve retornar null quando ocorre uma exceção geral");
+    }
 
 }
