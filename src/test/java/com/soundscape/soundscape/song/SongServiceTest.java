@@ -1,5 +1,6 @@
 package com.soundscape.soundscape.song;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -13,11 +14,14 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
@@ -32,6 +36,7 @@ import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.acrcloud.utils.ACRCloudRecognizer;
+import com.mpatric.mp3agic.Mp3File;
 import com.soundscape.soundscape.artist.ArtistModel;
 import com.soundscape.soundscape.artist.ArtistRepository;
 import com.soundscape.soundscape.artist.dto.ArtistDTO;
@@ -379,5 +384,28 @@ class SongServiceTest {
 
         assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
         assertEquals(null, response.getBody());
+    }
+
+    @Test
+    void testCreateRecognizer() {
+        Map<String, Object> config = new HashMap<>();
+        config.put("host", "https://test.acrcloud.com");
+        config.put("access_key", "testAccessKey");
+        config.put("access_secret", "testAccessSecret");
+        config.put("timeout", 10);
+
+        ACRCloudRecognizer recognizer = songService.createRecognizer(config);
+
+        assertNotNull(recognizer, "ACRCloudRecognizer should not be null");
+    }
+
+    @Test
+    void testCreateMp3File() throws Exception {
+        File mp3File = new File("src/test/resources/test-file.mp3");
+        assertTrue(mp3File.exists(), "The test MP3 file should exist");
+
+        Mp3File result = songService.createMp3File(mp3File);
+
+        assertNotNull(result, "Mp3File should not be null");
     }
 }
