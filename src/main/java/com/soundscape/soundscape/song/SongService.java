@@ -63,8 +63,12 @@ public class SongService {
     private String accessKey = System.getenv("ACR_ACCESS_KEY");
     private String accessSecret = System.getenv("ACR_ACCESS_SECRET");
     private String acrHost = System.getenv("ACR_HOST");
-    private String s3AccessKeyID = System.getenv("AWS_ACCESS_KEY_ID");
-    private String s3AccessKeySecret = System.getenv("AWS_ACCESS_KEY_SECRET");
+    private String s3AccessKeyID = System.getenv("AWS_ACCESS_KEY_ID") != null 
+    	    ? System.getenv("AWS_ACCESS_KEY_ID") 
+    	    : System.getProperty("AWS_ACCESS_KEY_ID", "defaultKeyId");
+    	private String s3AccessKeySecret = System.getenv("AWS_ACCESS_KEY_SECRET") != null 
+    	    ? System.getenv("AWS_ACCESS_KEY_SECRET") 
+    	    : System.getProperty("AWS_ACCESS_KEY_SECRET", "defaultSecretKey");
 
     public ResponseEntity<String> saveSongWithAudio(String userName, SongUploadDTO songData) throws IOException {
         ArtistModel artist = artistRepository.findByName(userName)
