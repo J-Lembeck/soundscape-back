@@ -48,6 +48,10 @@ import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 @Service
 public class SongService {
 
+	private static final String AWS_ACCESS_KEY_ID = "AWS_ACCESS_KEY_ID";
+    private static final String AWS_ACCESS_KEY_SECRET = "AWS_ACCESS_KEY_SECRET";
+    private static final String ARTIST_NOT_FOUND = "Artist not found";
+
 	@Autowired
     private SongRepository songRepository;
 
@@ -60,19 +64,19 @@ public class SongService {
     @Autowired
     private SongImageRepository songImageRepository;
 
-    private String accessKey = System.getenv("ACR_ACCESS_KEY");
-    private String accessSecret = System.getenv("ACR_ACCESS_SECRET");
+    private String accessKey = System.getenv(AWS_ACCESS_KEY_ID);
+    private String accessSecret = System.getenv(AWS_ACCESS_KEY_SECRET);
     private String acrHost = System.getenv("ACR_HOST");
-    private String s3AccessKeyID = System.getenv("AWS_ACCESS_KEY_ID") != null 
-    	    ? System.getenv("AWS_ACCESS_KEY_ID") 
-    	    : System.getProperty("AWS_ACCESS_KEY_ID", "defaultKeyId");
-    	private String s3AccessKeySecret = System.getenv("AWS_ACCESS_KEY_SECRET") != null 
-    	    ? System.getenv("AWS_ACCESS_KEY_SECRET") 
-    	    : System.getProperty("AWS_ACCESS_KEY_SECRET", "defaultSecretKey");
+    private String s3AccessKeyID = System.getenv(AWS_ACCESS_KEY_ID) != null 
+    	    ? System.getenv(AWS_ACCESS_KEY_ID) 
+    	    : System.getProperty(AWS_ACCESS_KEY_ID, "defaultKeyId");
+    	private String s3AccessKeySecret = System.getenv(AWS_ACCESS_KEY_SECRET) != null 
+    	    ? System.getenv(AWS_ACCESS_KEY_SECRET) 
+    	    : System.getProperty(AWS_ACCESS_KEY_SECRET, "defaultSecretKey");
 
     public ResponseEntity<String> saveSongWithAudio(String userName, SongUploadDTO songData) throws IOException {
         ArtistModel artist = artistRepository.findByName(userName)
-                .orElseThrow(() -> new IllegalArgumentException("Artist not found"));
+                .orElseThrow(() -> new IllegalArgumentException(ARTIST_NOT_FOUND));
 
         try {
             Date currentDate = new Date();
@@ -181,7 +185,7 @@ public class SongService {
 
     public List<SongDTO> listAllForLoggedUser(String userName) {
     	ArtistModel artist = artistRepository.findByName(userName)
-                .orElseThrow(() -> new IllegalArgumentException("Artist not found"));
+                .orElseThrow(() -> new IllegalArgumentException(ARTIST_NOT_FOUND));
 
     	return this.songRepository.findAllWithoutImageDataAndLikedStatus(artist.getId());
     }
@@ -193,7 +197,7 @@ public class SongService {
     @Transactional
     public List<SongDTO> searchSongsForLoggedUser(String searchTerm, String username) {
     	ArtistModel artist = artistRepository.findByName(username)
-                .orElseThrow(() -> new IllegalArgumentException("Artist not found"));
+                .orElseThrow(() -> new IllegalArgumentException(ARTIST_NOT_FOUND));
 
         List<SongDTO> foundSongs = songRepository.searchByTitleOrArtistNameAndLiked(searchTerm, artist.getId());
         return foundSongs;
@@ -209,7 +213,7 @@ public class SongService {
 
     public List<SongDTO> findLikedSongsFromArtist(String userName) {
     	ArtistModel artist = artistRepository.findByName(userName)
-                .orElseThrow(() -> new IllegalArgumentException("Artist not found"));
+                .orElseThrow(() -> new IllegalArgumentException(ARTIST_NOT_FOUND));
 
     	return artist.getLikedSongs().stream().map(song -> new SongFactory().buildLikedDTO(song))
                 .collect(Collectors.toList());
@@ -218,7 +222,7 @@ public class SongService {
     public ResponseEntity<String> likeSong(String userName, Long songId) {
         try {
             ArtistModel artist = artistRepository.findByName(userName)
-                    .orElseThrow(() -> new IllegalArgumentException("Artist not found."));
+                    .orElseThrow(() -> new IllegalArgumentException(ARTIST_NOT_FOUND));
 
             SongModel song = songRepository.findById(songId)
                     .orElseThrow(() -> new IllegalArgumentException("Song not found."));
@@ -247,8 +251,9 @@ public class SongService {
 
     public ResponseEntity<byte[]> downloadAudioFile(String userName, Long songId) {
         try {
-        	 artistRepository.findByName(userName)
-                     .orElseThrow(() -> new IllegalArgumentException("Artist not found."));
+        	@SuppressWarnings("unused")
+			ArtistModel artist = artistRepository.findByName(userName)
+                     .orElseThrow(() -> new IllegalArgumentException(ARTIST_NOT_FOUND));
 
             SongModel song = songRepository.findById(songId)
                     .orElseThrow(() -> new IllegalArgumentException("Song not found"));

@@ -2,7 +2,6 @@ package com.soundscape.soundscape.artist;
 
 import java.util.List;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -20,57 +19,55 @@ import com.soundscape.soundscape.song.dto.SongDTO;
 @RequestMapping("/artists")
 public class ArtistController {
 
-	@Autowired
-	private ArtistService artistService;
+    private final ArtistService artistService;
+    private final JwtTokenUtil jwtTokenUtil;
 
-	@Autowired
-	private JwtTokenUtil jwtTokenUtil;
+    public ArtistController(ArtistService artistService, JwtTokenUtil jwtTokenUtil) {
+        this.artistService = artistService;
+        this.jwtTokenUtil = jwtTokenUtil;
+    }
 
-	@GetMapping(path="/findById")
-	public ArtistDTO findById(@RequestParam Long artistId) {
-		return artistService.findById(artistId);
-	}
+    @GetMapping(path = "/findById")
+    public ArtistDTO findById(@RequestParam Long artistId) {
+        return artistService.findById(artistId);
+    }
 
-	@GetMapping(path="/findSongsFromArtist")
-	public List<SongDTO> findSongsFromArtist(@RequestParam Long artistId) {
-		return artistService.findSongsFromArtist(artistId);
-	}
+    @GetMapping(path = "/findSongsFromArtist")
+    public List<SongDTO> findSongsFromArtist(@RequestParam Long artistId) {
+        return artistService.findSongsFromArtist(artistId);
+    }
 
-	@GetMapping(path="/findArtistFromLoggedUser")
-	public ArtistDTO findArtistFromLoggedUser(@RequestHeader(HttpHeaders.AUTHORIZATION) String authHeader) {
-		String token = authHeader.substring(7);
-	    String userName = jwtTokenUtil.getUsernameFromToken(token);
+    @GetMapping(path = "/findArtistFromLoggedUser")
+    public ArtistDTO findArtistFromLoggedUser(@RequestHeader(HttpHeaders.AUTHORIZATION) String authHeader) {
+        String token = authHeader.substring(7);
+        String userName = jwtTokenUtil.getUsernameFromToken(token);
+        return artistService.findArtistFromLoggedUser(userName);
+    }
 
-		return artistService.findArtistFromLoggedUser(userName);
-	}
+    @PostMapping(path = "/followArtist")
+    public ResponseEntity<String> followArtist(@RequestHeader(HttpHeaders.AUTHORIZATION) String authHeader, @RequestParam Long artistToFollowId) {
+        String token = authHeader.substring(7);
+        String userName = jwtTokenUtil.getUsernameFromToken(token);
+        return artistService.followArtist(userName, artistToFollowId);
+    }
 
-	@PostMapping(path="/followArtist")
-	public ResponseEntity<String> followArtist(@RequestHeader(HttpHeaders.AUTHORIZATION) String authHeader, Long artistToFollowId) {
-		String token = authHeader.substring(7);
-	    String userName = jwtTokenUtil.getUsernameFromToken(token);
+    @GetMapping(path = "/findFollowedByUser")
+    public List<ArtistDTO> findFollowedByUser(@RequestHeader(HttpHeaders.AUTHORIZATION) String authHeader) {
+        String token = authHeader.substring(7);
+        String userName = jwtTokenUtil.getUsernameFromToken(token);
+        return artistService.findArtistsFollowedByUser(userName);
+    }
 
-	    return artistService.followArtist(userName, artistToFollowId);
-	}
-
-	@GetMapping(path="/findFollowedByUser")
-	public List<ArtistDTO> findFollowedByUser(@RequestHeader(HttpHeaders.AUTHORIZATION) String authHeader) {
-		String token = authHeader.substring(7);
-	    String userName = jwtTokenUtil.getUsernameFromToken(token);
-
-		return artistService.findArtistsFollowedByUser(userName);
-	}
-
-	@PostMapping("/unfollowArtist")
+    @PostMapping("/unfollowArtist")
     public ResponseEntity<String> unfollowArtist(@RequestHeader(HttpHeaders.AUTHORIZATION) String authHeader, @RequestParam Long artistToUnfollowId) {
-		String token = authHeader.substring(7);
-	    String userName = jwtTokenUtil.getUsernameFromToken(token);
-
+        String token = authHeader.substring(7);
+        String userName = jwtTokenUtil.getUsernameFromToken(token);
         return artistService.unfollowArtist(userName, artistToUnfollowId);
     }
 
-	@GetMapping(path="/findFollowersOfUser")
-	public List<ArtistDTO> findFollowersOfUser(@RequestParam Long artistId) {
-		return artistService.findFollowersOfUser(artistId);
-	}
-
+    @GetMapping(path = "/findFollowersOfUser")
+    public List<ArtistDTO> findFollowersOfUser(@RequestParam Long artistId) {
+        return artistService.findFollowersOfUser(artistId);
+    }
 }
+

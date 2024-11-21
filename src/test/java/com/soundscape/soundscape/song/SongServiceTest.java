@@ -351,7 +351,7 @@ class SongServiceTest {
         ResponseEntity<byte[]> response = songService.downloadAudioFile("testUser", 1L);
 
         assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
-        assertEquals("Error: Artist not found.", new String(response.getBody()));
+        assertEquals("Error: Artist not found", new String(response.getBody()));
     }
 
     @Test

@@ -28,6 +28,9 @@ public class ArtistService {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
+    private static final String ARTIST_NOT_FOUND_BY_NAME = "Artista não encontrado com o nome: ";
+    private static final String ARTIST_NOT_FOUND_BY_ID = "Artista não encontrado com o ID: ";
+
     @Validated
     public ResponseEntity<Object> registerArtist(ArtistRegistrationDTO registrationDTO) {
         List<String> errors = new ArrayList<>();
@@ -83,10 +86,10 @@ public class ArtistService {
 	public ResponseEntity<String> followArtist(String userName, Long artistToFollowId) {
 	    try {
 	        ArtistModel follower = artistRepository.findByName(userName)
-	                .orElseThrow(() -> new IllegalArgumentException("Artista não encontrado com o nome: " + userName));
+	                .orElseThrow(() -> new IllegalArgumentException(ARTIST_NOT_FOUND_BY_NAME + userName));
 
 	        ArtistModel artistToFollow = artistRepository.findById(artistToFollowId)
-	                .orElseThrow(() -> new IllegalArgumentException("Artista não encontrado com o ID: " + artistToFollowId));
+	                .orElseThrow(() -> new IllegalArgumentException(ARTIST_NOT_FOUND_BY_ID + artistToFollowId));
 
 	        if (artistToFollow.getFollowers().contains(follower)) {
 	            return ResponseEntity.badRequest().body("Você já segue este artista.");
@@ -106,10 +109,10 @@ public class ArtistService {
 	public ResponseEntity<String> unfollowArtist(String userName, Long artistToUnfollowId) {
 	    try {
 	        ArtistModel follower = artistRepository.findByName(userName)
-	            .orElseThrow(() -> new IllegalArgumentException("Artista não encontrado com o nome: " + userName));
+	            .orElseThrow(() -> new IllegalArgumentException(ARTIST_NOT_FOUND_BY_NAME + userName));
 
 	        ArtistModel artistToUnfollow = artistRepository.findById(artistToUnfollowId)
-	            .orElseThrow(() -> new IllegalArgumentException("Artista não encontrado com o ID: " + artistToUnfollowId));
+	            .orElseThrow(() -> new IllegalArgumentException(ARTIST_NOT_FOUND_BY_ID + artistToUnfollowId));
 
 	        if (!artistToUnfollow.getFollowers().contains(follower)) {
 	            return ResponseEntity.badRequest().body("Você não segue este artista.");
@@ -129,7 +132,7 @@ public class ArtistService {
 	@Transactional
 	public List<ArtistDTO> findArtistsFollowedByUser(String userName) {
 	    ArtistModel follower = artistRepository.findByName(userName)
-	            .orElseThrow(() -> new IllegalArgumentException("Artista não encontrado com o nome: " + userName));
+	            .orElseThrow(() -> new IllegalArgumentException(ARTIST_NOT_FOUND_BY_NAME + userName));
 
 	    return artistRepository.findAll().stream()
 	            .filter(artist -> artist.getFollowers().contains(follower))

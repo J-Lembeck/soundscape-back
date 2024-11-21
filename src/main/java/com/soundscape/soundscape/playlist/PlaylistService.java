@@ -29,6 +29,10 @@ public class PlaylistService {
 	@Autowired
 	private SongRepository songRepository;
 
+	private static final String PLAYLIST_NOT_FOUND = "Playlist not found";
+    private static final String USER_NOT_FOUND = "User not found";
+    private static final String SONG_NOT_FOUND = "Song not found";
+
 	public List<PlaylistDTO> findAllByArtist(String userName) {
 		ArtistModel artist = artistRepository.findByName(userName)
                 .orElseThrow(() -> new IllegalArgumentException("Artist not found"));
@@ -56,7 +60,7 @@ public class PlaylistService {
 	@Transactional
 	public List<SongDTO> findSongsFromPlaylist(Long playlistId) {
 		PlaylistModel playlist = this.playlistRepository.findById(playlistId)
-				.orElseThrow(() -> new IllegalArgumentException("Playlist not found"));
+				.orElseThrow(() -> new IllegalArgumentException(PLAYLIST_NOT_FOUND));
 
 		return playlist.getSongs().stream().map(song -> new SongFactory().buildDTO(song)).collect(Collectors.toList());
 	}
@@ -64,17 +68,17 @@ public class PlaylistService {
 	@Transactional
 	public ResponseEntity<String> addSongToPlaylist(Long playlistId, Long songId, String userName) {
 		ArtistModel artistLogged = artistRepository.findByName(userName)
-				.orElseThrow(() -> new IllegalArgumentException("User not found"));
+				.orElseThrow(() -> new IllegalArgumentException(USER_NOT_FOUND));
 
 	    PlaylistModel playlist = playlistRepository.findById(playlistId)
-	            .orElseThrow(() -> new IllegalArgumentException("Playlist not found"));
+	            .orElseThrow(() -> new IllegalArgumentException(PLAYLIST_NOT_FOUND));
 
 	    if (!artistLogged.getId().equals(playlist.getArtist().getId())) {
 	        return ResponseEntity.badRequest().body("No permission to edit this playlist.");
 	    }
 	    
 	    SongModel songToAdd = songRepository.findById(songId)
-	            .orElseThrow(() -> new IllegalArgumentException("Song not found"));
+	            .orElseThrow(() -> new IllegalArgumentException(SONG_NOT_FOUND));
 
 	    if (playlist.getSongs().contains(songToAdd)) {
 	        return ResponseEntity.badRequest().body("The song is already in the playlist.");
@@ -89,17 +93,17 @@ public class PlaylistService {
 	@Transactional
 	public ResponseEntity<String> removeSongFromPlaylist(Long playlistId, Long songId, String userName) {
 		ArtistModel artistLogged = artistRepository.findByName(userName)
-				.orElseThrow(() -> new IllegalArgumentException("User not found"));
+				.orElseThrow(() -> new IllegalArgumentException(USER_NOT_FOUND));
 
 	    PlaylistModel playlist = playlistRepository.findById(playlistId)
-	            .orElseThrow(() -> new IllegalArgumentException("Playlist not found"));
+	            .orElseThrow(() -> new IllegalArgumentException(PLAYLIST_NOT_FOUND));
 
 	    if (!artistLogged.getId().equals(playlist.getArtist().getId())) {
 	        return ResponseEntity.badRequest().body("No permission to edit this playlist.");
 	    }
 
 	    SongModel songToRemove = songRepository.findById(songId)
-	            .orElseThrow(() -> new IllegalArgumentException("Song not found"));
+	            .orElseThrow(() -> new IllegalArgumentException(SONG_NOT_FOUND));
 
 	    if (!playlist.getSongs().contains(songToRemove)) {
 	        return ResponseEntity.badRequest().body("The song is not in the playlist.");
@@ -114,10 +118,10 @@ public class PlaylistService {
 	public ResponseEntity<String> deletePlaylist(Long playlistId, String userName) {
 		try {
 			ArtistModel artistLogged = artistRepository.findByName(userName)
-					.orElseThrow(() -> new IllegalArgumentException("User not found"));
+					.orElseThrow(() -> new IllegalArgumentException(USER_NOT_FOUND));
 
 			PlaylistModel playlist = playlistRepository.findById(playlistId)
-					.orElseThrow(() -> new IllegalArgumentException("Playlist not found"));
+					.orElseThrow(() -> new IllegalArgumentException(PLAYLIST_NOT_FOUND));
 
 			if (!artistLogged.getId().equals(playlist.getArtist().getId())) {
 		        return ResponseEntity.badRequest().body("No permission to delete this playlist.");
