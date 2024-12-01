@@ -4,7 +4,7 @@ O **Soundscape** é uma plataforma de compartilhamento de áudio e informações
 
 ## Tecnologias Utilizadas
 
-- **Java 21**: A versão mais recente da linguagem Java, com novos recursos e melhorias.
+- **Java 17**: A versão mais recente da linguagem Java, com novos recursos e melhorias.
 - **Spring Boot**: Framework para o desenvolvimento rápido de aplicações Java, com configuração automática.
 - **Hibernate**: Framework de mapeamento objeto-relacional (ORM) que facilita a comunicação entre a aplicação Java e o banco de dados.
 - **JPA (Java Persistence API)**: Especificação para o mapeamento objeto-relacional que define como os objetos Java devem ser persistidos em bancos de dados.
