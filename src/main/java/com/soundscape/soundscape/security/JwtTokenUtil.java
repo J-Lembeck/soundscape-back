@@ -38,6 +38,17 @@ public class JwtTokenUtil {
         }
     }
 
+    public boolean simpleValidateToken(String token) {
+        try {
+            Jwts.parser().setSigningKey(secret).parseClaimsJws(token);
+            return !isTokenExpired(token);
+        } catch (ExpiredJwtException e) {
+            return false;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
     protected boolean isTokenExpired(String token) {
         try {
             Date expiration = Jwts.parser().setSigningKey(secret).parseClaimsJws(token).getBody().getExpiration();
