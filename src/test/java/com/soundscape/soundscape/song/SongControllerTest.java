@@ -46,6 +46,7 @@ public class SongControllerTest {
         String username = "testUser";
         List<SongDTO> userSongs = Collections.singletonList(new SongDTO());
 
+        when(jwtTokenUtil.simpleValidateToken("test-token")).thenReturn(true);
         when(jwtTokenUtil.getUsernameFromToken("test-token")).thenReturn(username);
         when(songService.listAllForLoggedUser(username)).thenReturn(userSongs);
 
@@ -53,6 +54,20 @@ public class SongControllerTest {
 
         assertEquals(userSongs, result);
         verify(songService).listAllForLoggedUser(username);
+    }
+
+    @Test
+    void listAllOrForLoggedUser_whenTokenInvalid_shouldReturnAllSongs() {
+        String authHeader = "Bearer invalid-token";
+        List<SongDTO> allSongs = Collections.singletonList(new SongDTO());
+
+        when(jwtTokenUtil.simpleValidateToken("invalid-token")).thenReturn(false);
+        when(songService.listAll()).thenReturn(allSongs);
+
+        List<SongDTO> result = songController.listAllOrForLoggedUser(authHeader);
+
+        assertEquals(allSongs, result);
+        verify(songService).listAll();
     }
 
     @Test
