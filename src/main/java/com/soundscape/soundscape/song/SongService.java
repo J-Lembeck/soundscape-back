@@ -50,6 +50,8 @@ public class SongService {
 
 	private static final String AWS_ACCESS_KEY_ID = "AWS_ACCESS_KEY_ID";
     private static final String AWS_ACCESS_KEY_SECRET = "AWS_ACCESS_KEY_SECRET";
+    private static final String ACR_ACCESS_KEY = "ACR_ACCESS_KEY";
+    private static final String ACR_SECRET = "ACR_ACCESS_SECRET";
     private static final String ARTIST_NOT_FOUND = "Artist not found";
 
 	@Autowired
@@ -64,8 +66,8 @@ public class SongService {
     @Autowired
     private SongImageRepository songImageRepository;
 
-    private String accessKey = System.getenv(AWS_ACCESS_KEY_ID);
-    private String accessSecret = System.getenv(AWS_ACCESS_KEY_SECRET);
+    private String acrAccessKey = System.getenv(ACR_ACCESS_KEY);
+    private String acrSecret = System.getenv(ACR_SECRET);
     private String acrHost = System.getenv("ACR_HOST");
     private String s3AccessKeyID = System.getenv(AWS_ACCESS_KEY_ID) != null 
     	    ? System.getenv(AWS_ACCESS_KEY_ID) 
@@ -89,8 +91,8 @@ public class SongService {
 
             Map<String, Object> config = new HashMap<>();
             config.put("host", acrHost);
-            config.put("access_key", accessKey);
-            config.put("access_secret", accessSecret);
+            config.put("access_key", acrAccessKey);
+            config.put("access_secret", acrSecret);
             config.put("timeout", 10);
 
             ACRCloudRecognizer recognizer = createRecognizer(config);
